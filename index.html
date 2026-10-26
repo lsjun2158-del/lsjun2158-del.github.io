@@ -1,27 +1,116 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Solo Climbing</title>
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Solo Climbing — 혼자 찍은 클라이밍 영상을 완등 장면으로</title>
+<meta name="description" content="혼자 찍은 클라이밍 영상을 완등 장면만 남게 다듬는 앱. Google Play · App Store.">
+<meta name="theme-color" content="#08080B">
+<link rel="canonical" href="https://welcomemyworld.dev/">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Solo Climbing">
+<meta property="og:title" content="Solo Climbing">
+<meta property="og:description" content="혼자 찍은 클라이밍 영상을 완등 장면으로">
+<meta property="og:url" content="https://welcomemyworld.dev/">
+<meta property="og:image" content="https://welcomemyworld.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="[ 알림 ] Solo Climbing — 혼자 찍은 클라이밍 영상을 완등 장면으로">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
-  :root { color-scheme: dark; }
-  body { margin:0; padding:48px 20px 96px; background:#08080B; color:#F4F4F7;
-         font:16px/1.75 -apple-system,"Segoe UI","Malgun Gothic",sans-serif; }
-  main { max-width:760px; margin:0 auto; }
-  h1 { font-size:28px; margin:0 0 8px; letter-spacing:-.01em; }
-  p, li { color:#C9C9D4; }
-  a { color:#8E73FF; }
-  ul { padding-left:22px; }
-  @media (max-width:600px) { body{padding:32px 16px 72px} }
-</style>
-</head>
-<body><main>
-<h1>Solo Climbing</h1>
-<p>클라이밍 영상을 자르고, 느리게 보고, 완등 기록을 남기는 앱입니다.</p>
-<ul>
-  <li><a href="https://play.google.com/store/apps/details?id=com.wmw.soloclimbing">Google Play 에서 받기</a></li>
-  <li><a href="https://lsjun2158-del.github.io/soloclimbing-privacy/">개인정보처리방침</a></li>
-</ul>
-</main></body>
-</html>
+/* 토큰 — WMW Design System (대비는 창 판 #0C0A15 기준) */
+:root{
+ --bg:#08080B;
+ --win:#0C0A15;          /* 창 판 */
+ --edge:#8A6AFF;         /* 창 테 · 빛 */
+ --text:#EDEDF2;         /* 16.8:1 */
+ --text2:#A8A8B8;        /* 8.4:1 */
+ --accent:#A78FFF;       /* 7.5:1 */
+ --font:"Pretendard",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html,body{background:var(--bg);color:var(--text);font:400 17px/1.45 var(--font);letter-spacing:-.2px;word-break:keep-all;-webkit-font-smoothing:antialiased}
+::selection{background:#6E4BFF;color:#fff}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:8px}
+
+.page{position:relative;min-height:100svh;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden}
+.page>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.26) saturate(.8)}
+.page::before{content:"";position:absolute;inset:0;background:radial-gradient(48% 42% at 50% 46%,rgba(110,75,255,.18),transparent 72%);pointer-events:none;z-index:1}
+header{position:relative;z-index:2;display:flex;justify-content:center;align-items:center;min-height:84px;padding:20px max(20px,4vw);font-size:15px}
+header b{font-weight:700}
+main{position:relative;z-index:2;display:grid;place-items:center;padding:8px max(20px,4vw) 48px}
+
+/* 알림창 — 앱의 판: 컷 코너(좌상·우하) + 브래킷(우상·좌하). 테는 두 겹 판이라 네 변 · 두 사선이 같은 두께 */
+.alert{--cc:22px;--w:1.5px;position:relative;isolation:isolate;width:min(520px,100%);padding:30px 32px 32px;text-align:center;
+ filter:drop-shadow(0 0 12px rgba(138,106,255,.45))}
+.alert::before,.alert::after{content:"";position:absolute;z-index:-1}
+.alert::before{inset:0;background:var(--edge);clip-path:polygon(var(--cc) 0,100% 0,100% calc(100% - var(--cc)),calc(100% - var(--cc)) 100%,0 100%,0 var(--cc))}
+.alert::after{--ci:calc(var(--cc) - var(--w) * .586);inset:var(--w);background:var(--win);clip-path:polygon(var(--ci) 0,100% 0,100% calc(100% - var(--ci)),calc(100% - var(--ci)) 100%,0 100%,0 var(--ci))}
+.bk{position:absolute;width:16px;height:16px;border:0 solid rgba(167,143,255,.85)}
+.bk.tr{top:9px;right:9px;border-top-width:1.25px;border-right-width:1.25px}
+.bk.bl{bottom:9px;left:9px;border-bottom-width:1.25px;border-left-width:1.25px}
+
+.tag{display:inline-flex;align-items:center;gap:10px;font:700 17px/1 var(--font);letter-spacing:.5px;color:#F1EDFF}
+.tag i{width:16px;height:16px;border:1.75px solid var(--accent);transform:rotate(45deg);display:grid;place-items:center}
+.tag i::after{content:"";width:2px;height:7px;background:var(--accent);transform:rotate(-45deg)}
+h1{font:700 clamp(28px,3vw,36px)/1.25 var(--font);letter-spacing:-.6px;margin-top:14px}
+h1 em{font-style:normal;color:var(--accent)}
+
+/* 앱 아이콘 — 가운데 점이 축. 글자와 배지 사이 정중앙 */
+.star{position:relative;height:176px;margin:20px 0;filter:drop-shadow(0 0 8px rgba(138,106,255,.9)) drop-shadow(0 0 20px rgba(110,75,255,.55))}
+.star i{position:absolute;left:50%;top:0;width:176px;height:176px;margin-left:-88px;background:#F1EDFF;
+ -webkit-mask:url(img/star.png) center/280px 280px no-repeat;mask:url(img/star.png) center/280px 280px no-repeat}
+
+/* 공식 배지 — 손대지 않고 높이만 맞춘다. 두 배지 같은 높이 · 사이 12 */
+.badges{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap}
+.badges a{display:block;line-height:0;border-radius:9px;transition:transform .14s cubic-bezier(.2,0,0,1),opacity .14s}
+.badges a:hover{opacity:.86}
+.badges a:active{transform:scale(.97)}
+.badges{--bh:52px}
+.badges img{height:var(--bh);width:auto;display:block}
+/* Google 배지 PNG 는 위아래 투명 여백이 있어 몸통이 높이의 76.8% — 몸통 높이를 App Store 배지와 같게 (Google: 다른 스토어 배지보다 작지 않게) */
+.badges img.gp{height:calc(var(--bh) / .768);margin:calc(var(--bh) * -.151) 0}
+
+/* 바닥글 — 개인정보처리방침 · 문의 · 만든 곳 */
+footer{position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 20px;padding:0 max(20px,4vw) 20px;font-size:14px;color:var(--text2)}
+footer a{display:inline-flex;align-items:center;min-height:44px;color:var(--text2);text-underline-offset:3px}
+footer a:hover{color:var(--text)}
+footer span{display:inline-flex;align-items:center;min-height:44px}
+@media (prefers-reduced-motion:no-preference){
+ .alert{animation:pop .42s cubic-bezier(.16,1,.3,1) both}
+ .star i{animation:spin 9s linear infinite}
+}
+@keyframes pop{0%{opacity:0;transform:scale(.94)}100%{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-contrast:more){.page>img{filter:brightness(.15)}.alert{filter:none}}
+@media (max-width:480px){
+ .alert{padding:26px 18px 24px;--cc:18px}
+ .star{height:150px;margin:16px 0}.star i{width:150px;height:150px;margin-left:-75px;-webkit-mask-size:240px 240px;mask-size:240px 240px}
+ .badges{--bh:44px}
+}
+</style></head><body>
+<div class="page">
+ <img src="img/wall-wide.jpg" alt="">
+ <header><b>Solo Climbing</b></header>
+ <main>
+  <section class="alert" aria-labelledby="h">
+   <span class="bk tr" aria-hidden="true"></span><span class="bk bl" aria-hidden="true"></span>
+   <p class="tag"><i aria-hidden="true"></i>[ 알림 ]</p>
+   <h1 id="h">환영합니다, <em>클라이머님</em></h1>
+   <div class="star" role="img" aria-label="Solo Climbing 아이콘"><i></i></div>
+   <div class="badges">
+    <a href="https://play.google.com/store/apps/details?id=com.wmw.soloclimbing"><img class="gp" src="img/badges/googleplay-ko.png" alt="Google Play에서 다운로드"></a>
+    <a href="https://apps.apple.com/kr/app/solo-climbing/id6821925506"><img src="img/badges/appstore-ko.svg" alt="App Store에서 다운로드"></a>
+   </div>
+  </section>
+ </main>
+ <footer>
+  <a href="/soloclimbing-privacy/">개인정보처리방침</a>
+  <a href="mailto:minjimom2158@gmail.com">문의 · minjimom2158@gmail.com</a>
+  <span>© 2026 WMW</span>
+ </footer>
+</div>
+</body></html>
