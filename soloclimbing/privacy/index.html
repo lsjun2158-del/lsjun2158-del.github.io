@@ -31,7 +31,7 @@
 
 <p>Solo Climbing(이하 &quot;앱&quot;)을 만든 사람은 이용자의 이름 · 연락처 · 영상 같은 개인정보를 수집하지 않습니다.<br>
 다만 무료판에는 <strong>Google AdMob 광고</strong>가 들어가며, 광고를 보여 주기 위해 Google 이 일부 정보를 수집합니다(5절).<br>
-또 Android 판은 앱을 더 안정적으로 만들기 위해 <strong>Google Firebase</strong> 로 비정상 종료 기록과 익명의 사용 통계를 받습니다(6절).<br>
+또 앱을 더 안정적으로 만들기 위해 <strong>Google Firebase</strong> 로 비정상 종료 기록과 익명의 사용 통계를 받습니다(6절).<br>
 이 방침은 앱이 무엇을 다루고 무엇을 다루지 않는지를 있는 그대로 적은 것입니다.</p>
 
 <p>이 방침은 <strong>Android 판과 iPhone(iOS) 판에 함께 적용</strong>됩니다. 두 판은 같은 일을 하며, 판마다 다른 곳만 «Android» · «iPhone» 으로 나눠 적었습니다.</p>
@@ -42,7 +42,7 @@
 
 <ul>
 <li><strong>회원가입·계정이 없고, 앱을 위한 별도 서버도 없습니다.</strong> 앱을 만든 사람은 이용자가 누구인지 알 수 없습니다.</li>
-<li><strong>Android 판은 비정상 종료 기록과 익명의 사용 통계</strong>를 Google Firebase 로 받습니다. 이름 · 연락처 · 영상 · 기록 · 광고 ID 는 들어가지 않습니다(6절). iPhone 판에는 아직 들어 있지 않습니다.</li>
+<li><strong>비정상 종료 기록과 익명의 사용 통계</strong>를 Google Firebase 로 받습니다. 이름 · 연락처 · 영상 · 기록 · 광고 ID 는 들어가지 않습니다(6절).</li>
 <li><strong>영상과 기록은 기기 밖으로 나가지 않습니다.</strong> 촬영·편집·기록은 전부 이용자의 휴대폰 안에서 이뤄집니다. 영상 속 사람을 찾는 기능(들찍)도 기기 안에서만 돕니다.</li>
 <li><strong>무료판에는 광고가 나옵니다.</strong> 광고는 Google AdMob 이 보여 주며, 이때 광고 ID 등 기기 정보가 Google 로 전송됩니다(5절).</li>
 </ul>
@@ -74,7 +74,7 @@
 <tr><td>등반 기록 (암장 이름, 문제 번호, 시도 횟수, 날짜)</td><td>이용자가 자기 기록을 보기 위해</td><td>기기 안</td></tr>
 <tr><td>앱 설정 (테마, 닉네임 등)</td><td>다음에 열 때 그대로 두기 위해</td><td>기기 안</td></tr>
 <tr><td>Pro 구독 여부</td><td>인터넷이 없을 때도 Pro 를 유지하기 위해</td><td>기기 안</td></tr>
-<tr><td>앱이 멈춘 기록 (오류 내용)</td><td>다음에 켤 때와 설정 › 「오류 기록」 에서 이용자에게 보여 주기 위해. 이 기록 자체는 보내지 않으며, 이용자가 직접 복사해 문의에 붙일 수 있습니다. (Android 판은 이와 별도로 비정상 종료 정보를 Firebase Crashlytics 로 보냅니다 — 6절)</td><td>기기 안</td></tr>
+<tr><td>앱이 멈춘 기록 (오류 내용)</td><td>다음에 켤 때와 설정 › 「오류 기록」 에서 이용자에게 보여 주기 위해. 이 기록 자체는 보내지 않으며, 이용자가 직접 복사해 문의에 붙일 수 있습니다. (이와 별도로 비정상 종료 정보를 Firebase Crashlytics 로 보냅니다 — 6절)</td><td>기기 안</td></tr>
 </tbody>
 </table>
 
@@ -147,7 +147,7 @@ iPhone 에서 백업 파일을 고르거나 내보낼 때는 «파일» 앱의 �
 <thead><tr><th>어디서</th><th>무엇이 전송되나</th><th>받는 곳</th></tr></thead>
 <tbody>
 <tr><td>광고 (무료판)</td><td>5절의 정보</td><td>Google AdMob</td></tr>
-<tr><td>비정상 종료 기록 · 사용 통계 · 앱 설정 받기 (Android)</td><td>6절의 정보</td><td>Google Firebase</td></tr>
+<tr><td>비정상 종료 기록 · 사용 통계 · 앱 설정 받기</td><td>6절의 정보</td><td>Google Firebase</td></tr>
 <tr><td>Pro 구독</td><td>구독 상품 정보 조회, 구매, 구독 상태 확인</td><td>Android: Google Play · iPhone: App Store (Apple)</td></tr>
 </tbody>
 </table>
@@ -198,8 +198,8 @@ Apple 의 개인정보처리방침: <a href="https://www.apple.com/kr/legal/priv
 
 <h2>6. 비정상 종료 기록과 사용 통계 (Google Firebase)</h2>
 
-<p><strong>Android 판(1.4.0 부터)</strong> 은 앱을 고치고 더 낫게 만들기 위해 <strong>Google Firebase</strong> 의 세 가지를 씁니다.<br>
-<strong>iPhone 판에는 아직 들어 있지 않습니다</strong> — 넣게 되면 이 절을 고치고 시행일을 바꿉니다. 받은 정보로 이용자가 누구인지 알 수는 없습니다.</p>
+<p>앱을 고치고 더 낫게 만들기 위해 <strong>Google Firebase</strong> 의 세 가지를 씁니다 — Android 판은 1.4.0 부터, iPhone 판은 이 방침 시행 뒤 나오는 업데이트부터입니다.<br>
+받은 정보로 이용자가 누구인지 알 수는 없습니다.</p>
 
 <table>
 <thead><tr><th>무엇</th><th>전송되는 정보</th><th>목적</th></tr></thead>
@@ -211,7 +211,7 @@ Apple 의 개인정보처리방침: <a href="https://www.apple.com/kr/legal/priv
 </table>
 
 <ul>
-<li><strong>보내지 않는 것:</strong> 이름 · 연락처 · 계정, 촬영한 영상 · 사진, 등반 기록, 정확한 위치, <strong>광고 ID</strong>(Firebase 에서는 광고 ID 를 모으지 않도록 꺼 두었습니다).</li>
+<li><strong>보내지 않는 것:</strong> 이름 · 연락처 · 계정, 촬영한 영상 · 사진, 등반 기록, 정확한 위치, <strong>광고 ID</strong>(Firebase 에서는 Android 의 광고 ID · iPhone 의 IDFA 를 모으지 않습니다. iPhone 에서 «추적 허용» 은 5절의 AdMob 광고에만 쓰입니다).</li>
 <li>사용 통계는 스토어에서 받은 앱에서만 모읍니다.</li>
 <li>이 정보는 Google 의 서버에 저장되며 Google 의 방침을 따릅니다: <a href="https://firebase.google.com/support/privacy">https://firebase.google.com/support/privacy</a></li>
 <li>앱을 만든 사람은 이 정보를 Google 의 Firebase 화면에서 모아서만 봅니다.</li>
@@ -280,10 +280,10 @@ Apple 의 개인정보처리방침: <a href="https://www.apple.com/kr/legal/priv
 앱의 기능이 바뀌어 다루는 정보가 달라지는 경우에만 바뀝니다.</p>
 
 <ul>
-<li>2026-10-27: Android 판(1.4.0)에 비정상 종료 기록과 사용 통계를 위한 Google Firebase(Crashlytics · Analytics · Remote Config)를 더하며 6절을 새로 쓰고,</li>
+<li>2026-10-27: 비정상 종료 기록과 사용 통계를 위한 Google Firebase(Crashlytics · Analytics · Remote Config)를 두 판에 더하며(Android 1.4.0 · iPhone 다음 업데이트) 6절을 새로 쓰고,</li>
 </ul>
 
-<p>머리말과 1 · 2 · 4 · 5 · 8 · 9절을 고쳤습니다. 그 뒤의 절 번호가 하나씩 밀렸습니다. iPhone 판에는 아직 들어 있지 않습니다.</p>
+<p>머리말과 1 · 2 · 4 · 5 · 8 · 9절을 고쳤습니다. 그 뒤의 절 번호가 하나씩 밀렸습니다.</p>
 
 <ul>
 <li>2026-10-19: iPhone 판도 완등 영상을 사진 앱의 «Solo Climbing» 앨범에 한 벌 두도록 했습니다(설정에서 끌 수 있음) — 앱을 지워도 남게.</li>
