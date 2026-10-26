@@ -1,13 +1,36 @@
-# Solo Climbing — 개발자 웹사이트
+# Solo Climbing — 웹사이트
 
 Play 스토어 등록정보의 **웹사이트** 칸에 넣는 사이트입니다. 앱 소스는 여기 없습니다.
 
-- 게시 주소: <https://lsjun2158-del.github.io/>
+- 게시 주소: <https://welcomemyworld.dev/> (2026-10-26 부터. 옛 주소 `lsjun2158-del.github.io` 는 GitHub 가 여기로 넘긴다)
 - 게시 저장소: `lsjun2158-del/lsjun2158-del.github.io` (GitHub Pages 사용자 사이트)
-- `app-ads.txt`: AdMob 앱 인증용. **도메인 맨 윗자리**에 있어야 AdMob 이 찾는다
-  (개인정보처리방침 저장소 `soloclimbing-privacy` 는 하위 경로라 쓸 수 없다)
+- 도메인: Porkbun 에서 등록(자동 갱신 · WHOIS 보호). DNS 는 GitHub Pages 주소 A 4 · AAAA 4 + `www` CNAME
+- 개인정보처리방침은 별도 저장소 `soloclimbing-privacy` 가 <https://welcomemyworld.dev/soloclimbing-privacy/> 로 열린다
+
+## 파일
+
+| 파일 | 뜻 |
+|---|---|
+| `index.html` | 첫 화면 — [ 알림 ] 환영합니다, 클라이머님 · 도는 앱 아이콘 · 공식 스토어 배지 둘 · 바닥글 |
+| `CNAME` | 도메인을 붙이는 파일. **지우면 사이트가 옛 주소로 돌아간다** |
+| `app-ads.txt` | AdMob 앱 인증용. **도메인 맨 윗자리**에 있어야 AdMob 이 찾는다. 지우면 광고가 막힌다 |
+| `og.png` | 링크 미리보기(카톡 · 인스타) 1200×630 |
+| `favicon.ico` · `favicon-48.png` · `apple-touch-icon.png` | 탭 · 홈 화면 아이콘 — 앱 아이콘(흰 별 · #300054) |
+| `img/star.png` | 앱 아이콘 원본(`android/.../drawable-nodpi/ic_launcher_fg.webp`)을 PNG 로. CSS mask 로 칠하고 돌린다 |
+| `img/wall-wide.jpg` | 배경 벽 사진 — 스토어 스크린샷(촬영 화면)에서 벽만 잘라 낸 것 |
+| `img/badges/` | **공식 배지 그대로** — App Store 는 Apple 마케팅 도구 한국어 SVG, Google Play 는 Google 한국어 PNG. 색 · 모양을 바꾸지 않고 높이만 맞춘다 |
+
+## 디자인 규칙
+
+- WMW 디자인 시스템 색(검정 · 보라 `#6E4BFF` 계열)과 Pretendard 하나. 앱 버튼 판(컷 코너 좌상·우하 + 브래킷 우상·좌하)을 창에 쓴다.
+- 스토어 단추에 Apple · Google 로고를 손으로 그리지 않는다(상표 지침). 공식 배지만.
+- Google 배지 PNG 는 위아래 투명 여백이 있어 몸통이 높이의 76.8% — CSS 로 두 배지 몸통 높이를 같게 맞춘다.
+- 눌러도 갈 곳 없는 링크는 두지 않는다(영어 · 일본어 페이지가 생기면 언어 링크를 다시 넣는다).
 
 ## 고칠 때
 
-이 폴더(`docs/devsite/`)를 먼저 고치고 게시 저장소에 그대로 올립니다.
+1. 이 폴더(`docs/devsite/`)를 먼저 고친다.
+2. 로컬에서 열어 1440 · 768 · 390 폭으로 확인한다(CSS mask 이미지는 `file://` 에서 안 그려지므로 로컬 서버로 연다).
+3. 게시 저장소에 그대로 복사해 푸시한다. **구간 하나가 끝나고 확인을 마친 것만** 올린다 — 올리는 순간 공개된다.
+
 **게시 저장소에서 직접 고치면 앱 저장소의 사본과 어긋납니다.**
