@@ -22,6 +22,11 @@
   td { color:#C9C9D4; }
   ul { padding-left:22px; }
   @media (max-width:600px) { body{padding:32px 16px 72px} table{font-size:14px} }
+  /* 읽기 쉬운 줄바꿈 — 낱말 가운데서 끊지 않고, 긴 주소만 어디서든 끊는다 */
+  body { word-break:keep-all; overflow-wrap:break-word; }
+  h1, h2 { text-wrap:balance; }
+  p, li, td { text-wrap:pretty; }
+  a, code { overflow-wrap:anywhere; }
 </style>
 </head>
 <body><main>
