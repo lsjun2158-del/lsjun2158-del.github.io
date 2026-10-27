@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Solo Climbing 문의함</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#08080B">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+/* 오너 전용 문의함 — 홈페이지 문의(Firestore inquiries)를 모아 본다. 읽기는 보안 규칙이 오너 계정에만 연다 */
+:root{--bg:#08080B;--win:#0C0A15;--surface:#131318;--raised:#1B1B22;--line:#2A2A34;--text:#EDEDF2;--text2:#A8A8B8;--text3:#7A7A8C;--accent:#A78FFF;--primary:#6E4BFF;--edge:#8A6AFF;
+ --bug:#F97066;--idea:#53B1FD;--gym:#32D583;--etc:#A8A8B8;--font:"Pretendard",system-ui,-apple-system,"Malgun Gothic",sans-serif;color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--text);font:400 15px/1.5 var(--font);letter-spacing:-.2px;word-break:keep-all;-webkit-font-smoothing:antialiased}
+body{padding:max(20px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px))}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+main{max-width:760px;margin:0 auto;display:grid;gap:16px}
+.tag{display:inline-flex;align-items:center;gap:9px;font:700 15px/1 var(--font);letter-spacing:.5px;color:#F1EDFF}
+.tag i{width:14px;height:14px;border:1.6px solid var(--accent);transform:rotate(45deg)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.who{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text3)}
+.who button{min-height:36px;padding:0 12px;border-radius:9px;box-shadow:inset 0 0 0 1px var(--line);color:var(--text2);font-size:13px}
+.gate{min-height:60vh;display:grid;place-items:center;text-align:center}
+.gate .box{display:grid;gap:14px;justify-items:center;max-width:320px}
+.gate .lk{width:60px;height:60px;border:2px solid var(--accent);transform:rotate(45deg);display:grid;place-items:center}
+.gate .lk::after{content:"";width:18px;height:18px;background:var(--accent);transform:rotate(-45deg);border-radius:3px}
+.gate p{color:var(--text2);font-size:14px}
+.gbtn{display:inline-flex;align-items:center;gap:10px;min-height:46px;padding:0 18px;border-radius:10px;background:#F1EDFF;color:#0C0A15;font-weight:700}
+.gbtn b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#0C0A15;color:#F1EDFF;font-size:12px}
+.msg{padding:10px 12px;border-radius:10px;background:rgba(249,112,102,.12);color:#FDA29B;font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats button{padding:10px 12px;border-radius:12px;background:var(--surface);display:grid;gap:2px;text-align:left;box-shadow:inset 0 0 0 1px transparent}
+.stats button[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.stats span{font-size:12px;color:var(--text3)}
+.stats b{font:700 22px/1 var(--font);font-variant-numeric:tabular-nums}
+.stats .s-new b{color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 12px;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);font-size:13px;color:var(--text2)}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.chip[aria-pressed="true"]{color:#F1EDFF;background:#17122B;box-shadow:inset 0 0 0 1.5px var(--c,var(--accent))}
+.list{display:grid;gap:10px}
+.it{display:grid;gap:8px;padding:14px;border-radius:12px;background:var(--surface);box-shadow:inset 3px 0 0 var(--c)}
+.it .r1{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text3)}
+.it .ty{font-weight:700;color:var(--c)}
+.it .st{margin-left:auto;padding:3px 9px;border-radius:999px;font-weight:700;font-size:11px}
+.st.new{background:rgba(167,143,255,.22);color:#F1EDFF}.st.seen{background:var(--raised);color:var(--text2)}.st.done{background:rgba(50,213,131,.16);color:#7EE2AE}
+.it .tx{font-size:15px;white-space:pre-wrap;overflow-wrap:anywhere}
+.it .meta{display:flex;flex-wrap:wrap;gap:5px}
+.it .meta span{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--raised);color:var(--text2);overflow-wrap:anywhere}
+.it .act{display:flex;flex-wrap:wrap;gap:6px}
+.it .act button{min-height:34px;padding:0 11px;border-radius:8px;font-size:13px;font-weight:600;color:var(--text2);box-shadow:inset 0 0 0 1px var(--line)}
+.it .act button[aria-pressed="true"]{color:#F1EDFF;box-shadow:inset 0 0 0 1.5px var(--accent)}
+.it .act .del{margin-left:auto;color:#FDA29B}
+.it .act .del.sure{background:rgba(249,112,102,.18)}
+.empty{padding:28px 12px;text-align:center;color:var(--text3)}
+.copy{font-size:12px;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+@media (max-width:420px){.stats b{font-size:19px}}
+</style></head><body>
+<main>
+ <div class="top"><p class="tag"><i aria-hidden="true"></i>[ 문의함 ]</p><div class="who" id="who" hidden><span id="who-n">관리자로 로그인됨</span><button type="button" id="out">로그아웃</button></div></div>
+
+ <section class="gate" id="gate">
+  <div class="box">
+   <span class="lk" aria-hidden="true"></span>
+   <b>오너만 볼 수 있어요</b>
+   <p>오너 구글 계정으로 로그인하면 문의함이 열려요. 다른 계정은 읽기가 막혀 있어요.</p>
+   <button type="button" class="gbtn" id="in"><b>G</b>구글로 로그인</button>
+   <p class="msg" id="gate-msg" role="alert" hidden></p>
+  </div>
+ </section>
+
+ <section id="box" hidden aria-label="문의 목록">
+  <div style="display:grid;gap:12px">
+   <div class="stats" id="stats"></div>
+   <div class="chips" id="types"></div>
+   <p class="msg" id="box-msg" role="alert" hidden></p>
+   <div class="list" id="list"></div>
+  </div>
+ </section>
+</main>
+
+<script type="module">
+// Firebase 웹 설정 (공개 값 — 비밀이 아니다. 읽기는 보안 규칙이 막는다)
+const C = {"apiKey":"AIzaSyBT2706pHuJZNlCb_eXFR86dBj1q7E1HDg","authDomain":"solo-climbing.firebaseapp.com","projectId":"solo-climbing","storageBucket":"solo-climbing.firebasestorage.app","messagingSenderId":"237692887773","appId":"1:237692887773:web:7167f357e7f6100e01b134"};
+const V = '10.12.2';
+const $ = id => document.getElementById(id);
+const TY = { bug: ['불편해요 · 오류', 'var(--bug)'], idea: ['이런 기능 있으면', 'var(--idea)'], gym: ['암장 정보가 달라요', 'var(--gym)'], etc: ['기타', 'var(--etc)'] };
+const ST = { new: '새 글', seen: '확인함', done: '반영됨' };
+let items = [], fType = 'all', fSt = 'all', unsub = null;
+const show = (el, m) => { el.textContent = m; el.hidden = !m; };
+
+if (!C) { show($('gate-msg'), 'Firebase 설정이 아직 들어가지 않았어요.'); $('in').disabled = true; }
+else {
+  const appM = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
+  const authM = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
+  const fsM = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
+  const app = appM.initializeApp(C), auth = authM.getAuth(app), db = fsM.getFirestore(app);
+  const prov = new authM.GoogleAuthProvider(); prov.setCustomParameters({ prompt: 'select_account' });
+  // 로그인 — 팝업이 막히는 폰에서는 넘겨서 로그인
+  $('in').onclick = async () => { show($('gate-msg'), ''); try { await authM.signInWithPopup(auth, prov); } catch (e) { if (/popup/.test(e.code || '')) authM.signInWithRedirect(auth, prov); else show($('gate-msg'), '로그인하지 못했어요. 다시 눌러 주세요.'); } };
+  $('out').onclick = () => authM.signOut(auth);
+  authM.getRedirectResult(auth).catch(() => {});
+  authM.onAuthStateChanged(auth, user => {
+    if (unsub) { unsub(); unsub = null; }
+    if (!user) { $('gate').hidden = false; $('box').hidden = true; $('who').hidden = true; return; }
+    $('who').hidden = false;
+    const q = fsM.query(fsM.collection(db, 'inquiries'), fsM.orderBy('createdAt', 'desc'), fsM.limit(300));
+    unsub = fsM.onSnapshot(q, snap => {
+      items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      $('gate').hidden = true; $('box').hidden = false; render();
+    }, e => {
+      // 오너 계정이 아니면 규칙이 읽기를 막는다
+      $('box').hidden = true; $('gate').hidden = false;
+      show($('gate-msg'), e.code === 'permission-denied' ? '이 계정은 문의함을 볼 수 없어요. 오너 계정으로 다시 로그인해 주세요.' : '문의를 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.');
+      authM.signOut(auth);
+    });
+  });
+  window.__setStatus = async (id, st) => { try { await fsM.updateDoc(fsM.doc(db, 'inquiries', id), { status: st }); } catch (e) { show($('box-msg'), '상태를 바꾸지 못했어요.'); } };
+  window.__del = async id => { try { await fsM.deleteDoc(fsM.doc(db, 'inquiries', id)); } catch (e) { show($('box-msg'), '지우지 못했어요.'); } };
+}
+
+const ago = ts => { if (!ts || !ts.toDate) return '방금'; const d = ts.toDate(), s = (Date.now() - d) / 1000;
+  if (s < 60) return '방금'; if (s < 3600) return Math.floor(s / 60) + '분 전'; if (s < 86400) return Math.floor(s / 3600) + '시간 전'; if (s < 86400 * 7) return Math.floor(s / 86400) + '일 전';
+  return (d.getMonth() + 1) + '월 ' + d.getDate() + '일'; };
+function render() {
+  const cnt = st => items.filter(i => (st === 'all' || (i.status || 'new') === st)).length;
+  $('stats').innerHTML = ['new', 'seen', 'done'].map(k => `<button type="button" class="s-${k}" aria-pressed="${fSt === k}" data-s="${k}"><span>${ST[k]}</span><b>${cnt(k)}</b></button>`).join('');
+  const byT = k => items.filter(i => (k === 'all' || i.type === k) && (fSt === 'all' || (i.status || 'new') === fSt)).length;
+  $('types').innerHTML = `<button type="button" class="chip" aria-pressed="${fType === 'all'}" data-k="all">전체 ${byT('all')}</button>` + Object.entries(TY).map(([k, [n, c]]) => `<button type="button" class="chip" aria-pressed="${fType === k}" data-k="${k}" style="--c:${c}"><span class="dot"></span>${n.split(' ·')[0]} ${byT(k)}</button>`).join('');
+  const list = items.filter(i => (fType === 'all' || i.type === fType) && (fSt === 'all' || (i.status || 'new') === fSt));
+  const L = $('list'); L.innerHTML = '';
+  if (!list.length) { L.innerHTML = '<p class="empty">여기에 맞는 문의가 아직 없어요.</p>'; return; }
+  for (const i of list) {
+    const [n, c] = TY[i.type] || TY.etc, st = i.status || 'new';
+    const a = document.createElement('article'); a.className = 'it'; a.style.setProperty('--c', c);
+    a.innerHTML = `<div class="r1"><span class="ty"></span><span class="when"></span><span class="st ${st}">${ST[st]}</span></div><p class="tx"></p><div class="meta"></div><div class="act"></div>`;
+    a.querySelector('.ty').textContent = n; a.querySelector('.when').textContent = ago(i.createdAt);
+    a.querySelector('.tx').textContent = i.text || '';   // 사용자 글은 글자로만 (HTML 로 해석하지 않게)
+    const meta = a.querySelector('.meta');
+    [i.screen, i.os, i.ver && ('버전 ' + i.ver), i.gym, i.gymWhat].filter(Boolean).forEach(m => { const s = document.createElement('span'); s.textContent = m; meta.appendChild(s); });
+    if (i.contact) { const s = document.createElement('span'); s.textContent = '답장: ' + i.contact; meta.appendChild(s);
+      const cp = document.createElement('button'); cp.type = 'button'; cp.className = 'copy'; cp.textContent = '연락처 복사';
+      cp.onclick = () => navigator.clipboard && navigator.clipboard.writeText(i.contact).then(() => { cp.textContent = '복사됨'; }).catch(() => {}); meta.appendChild(cp); }
+    if (!meta.children.length) meta.remove();
+    const act = a.querySelector('.act');
+    ['new', 'seen', 'done'].forEach(k => { const b = document.createElement('button'); b.type = 'button'; b.textContent = ST[k]; b.setAttribute('aria-pressed', st === k); b.onclick = () => window.__setStatus(i.id, k); act.appendChild(b); });
+    // 지우기 — 한 번 더 눌러야 지운다 (되돌릴 수 없어서)
+    const del = document.createElement('button'); del.type = 'button'; del.className = 'del'; del.textContent = '지우기';
+    del.onclick = () => { if (del.classList.contains('sure')) window.__del(i.id); else { del.classList.add('sure'); del.textContent = '정말 지울까요?'; setTimeout(() => { del.classList.remove('sure'); del.textContent = '지우기'; }, 3000); } };
+    act.appendChild(del);
+    L.appendChild(a);
+  }
+}
+$('stats').onclick = e => { const b = e.target.closest('button'); if (!b) return; fSt = fSt === b.dataset.s ? 'all' : b.dataset.s; render(); };
+$('types').onclick = e => { const b = e.target.closest('button'); if (!b) return; fType = b.dataset.k; render(); };
+</script>
+</body></html>
