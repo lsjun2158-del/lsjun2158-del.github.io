@@ -20,6 +20,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 
+
 <script>if(!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("intro")</script>
 <style>
 /* 레이아웃: 위에서 아래로 한 줄 — 첫 화면(알림) → 튜토리얼(장 셋 · 사슬) → 스킬(슬롯). 구간마다 같은 시스템 창 판 */
@@ -478,6 +479,68 @@ p,li{text-wrap:pretty}
 .v-R3 .gm-t[aria-selected="true"],.v-R3 .gm-t.hot{background:linear-gradient(180deg,#A78FFF,#3B2A80)}
 @media (prefers-reduced-motion:reduce){.orb-st,.fob::after{animation:none}.fab .gm-t{transition:opacity .15s}}
 
+/* ── 스킬 «밀어서 비교» (10-28) ── */
+.skA{grid-template-columns:1fr!important;max-width:1040px}
+@media (min-width:861px){.slots{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.detail .sk-one{font:600 18px/1.45 var(--font);color:#F1EDFF;margin-top:8px;text-wrap:pretty}
+.sk-grid{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:clamp(20px,3vw,36px);margin-top:22px;align-items:start}
+.sk-col{display:grid;gap:12px;justify-items:center}
+.detail .sk-sec{margin:0;font:700 13px/1.3 var(--font);letter-spacing:.4px;color:var(--accent);justify-self:start}
+.sk-side{display:grid;gap:14px;align-content:start;min-width:0}
+.detail .sk-more{margin:0;max-width:62ch;text-wrap:pretty}
+.sk-ph{position:relative;width:100%;max-width:280px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;background:#000;box-shadow:0 0 0 5px #17151F,0 0 0 6px #2C2838}
+.sk-ph.tall{aspect-ratio:9/20;max-width:180px}
+.sk-ph video,.sk-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.sk-cmp{touch-action:pan-y;cursor:ew-resize;user-select:none;-webkit-user-select:none}
+.sk-cmp.still{cursor:default}
+.sk-cmp .top{clip-path:inset(0 0 0 var(--x,50%))}
+.sk-cmp .bar{position:absolute;top:0;bottom:0;left:var(--x,50%);width:2px;margin-left:-1px;background:#F1EDFF;z-index:4;box-shadow:0 0 12px rgba(167,143,255,.9)}
+.sk-cmp .knob{position:absolute;top:50%;left:var(--x,50%);z-index:5;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:#F1EDFF;display:grid;place-items:center;box-shadow:0 2px 12px rgba(0,0,0,.5)}
+.sk-cmp .knob svg{width:22px;height:22px;fill:none;stroke:#0C0A15;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.sk-cmp.still .bar,.sk-cmp.still .knob,.sk-cmp.still #sk-lb{display:none}
+.sk-cmp .lab{position:absolute;top:10px;left:10px;z-index:3;font:700 12px/1.2 var(--font);padding:6px 9px;border-radius:999px;background:rgba(8,8,11,.72);color:#F1EDFF}
+.sk-cmp .lab.after{background:rgba(110,75,255,.88)}
+.sk-cmp .lab.r{left:auto;right:10px}
+.sk-ov{position:absolute;bottom:12px;left:10px;z-index:3;max-width:44%;font:600 12px/1.3 var(--font);padding:6px 9px;border-radius:10px;background:rgba(8,8,11,.78);color:#F1EDFF;text-wrap:balance}
+.sk-ov.r{left:auto;right:10px;text-align:right}
+.sk-cmp.tl{cursor:default}
+.sk-cmp.tl .bar,.sk-cmp.tl .knob,.sk-cmp.tl #sk-lb{display:none}
+.sk-cmp.tl .top{clip-path:none}
+.sk-dim{position:absolute;inset:0;z-index:2;display:grid;place-items:end center;padding:0 14px 16px;background:rgba(8,8,11,.62);font:700 14px/1.35 var(--font);color:#F1EDFF;text-align:center;text-wrap:balance}
+.sk-tl{display:grid;gap:10px;margin-top:20px;padding:16px;border-radius:14px;background:rgba(19,19,24,.7);box-shadow:inset 0 0 0 1px rgba(138,106,255,.22)}
+.detail .sk-leg{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12px;color:var(--text2)}
+.sk-leg span{width:18px;height:12px;border-radius:3px}.sk-leg .k{box-shadow:inset 0 0 0 2px var(--accent)}.sk-leg .c{background:repeating-linear-gradient(135deg,#3A3A46 0 4px,#1B1B22 4px 8px)}
+.detail .sk-tl-h{margin:0;font:800 22px/1.3 var(--font);color:#F1EDFF;text-wrap:balance}
+.sk-rows{display:grid;gap:10px}
+.sk-row{display:grid;gap:4px}
+.detail .sk-rl{margin:0;font-size:13px;line-height:1.4;color:var(--text2);display:flex;flex-wrap:wrap;column-gap:8px;align-items:baseline}
+.sk-rl b{color:var(--text);font-weight:700}
+.sk-none{color:var(--accent);font-weight:600}
+.sk-bar{position:relative;display:flex;gap:2px;height:52px}
+.sk-seg{position:relative;min-width:0;border-radius:6px;background-color:#1B1B22;background-repeat:no-repeat;overflow:hidden}
+.sk-seg.cut::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(8,8,11,.78) 0 6px,rgba(8,8,11,.6) 6px 12px)}
+.sk-seg.keep{box-shadow:inset 0 0 0 2px var(--accent)}
+.sk-seg.slow{box-shadow:inset 0 0 0 2px #FFC44D}
+.sk-seg.card{background:linear-gradient(135deg,#2A1F55,#120E22);box-shadow:inset 0 0 0 2px var(--accent)}
+.sk-seg i{position:absolute;left:4px;right:4px;bottom:3px;font:700 11px/1.25 var(--font);font-style:normal;color:#F1EDFF;text-shadow:0 1px 3px #000;text-align:center;text-wrap:balance}
+.sk-seg i{z-index:1}
+@media (max-width:560px){.sk-seg{background-image:none!important;background-color:#24222E}.sk-seg.keep{background-color:rgba(167,143,255,.32)}.sk-seg.slow{background-color:rgba(255,196,77,.3)}.sk-bar{height:40px}}
+.sk-head{position:absolute;top:-4px;bottom:-4px;width:3px;margin-left:-1.5px;border-radius:2px;background:#F1EDFF;box-shadow:0 0 8px rgba(167,143,255,.9);z-index:2}
+.sk-pp{min-height:44px;padding:0 18px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px rgba(138,106,255,.35);font:600 14px/1 var(--font);color:var(--text)}
+.sk-pp:hover{background:var(--raised)}
+.sk-how{display:grid;grid-template-columns:180px minmax(0,1fr);gap:18px;align-items:start}
+.sk-steps{display:grid;gap:8px;counter-reset:s;padding:0;margin:0;list-style:none}
+.sk-steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:10px;row-gap:2px;align-items:start;padding:10px 12px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px transparent;cursor:pointer;transition:background .2s,box-shadow .2s}
+.sk-steps li::before{content:counter(s);grid-row:1/span 2;display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--raised);font:800 14px/1 var(--font);color:var(--text2)}
+.sk-steps li>*{grid-column:2}
+.sk-steps b{display:block;font-weight:700;color:var(--text);font-size:15px;line-height:1.4}
+.sk-steps span{display:block;font-size:13px;line-height:1.45;color:var(--text2)}
+.sk-steps li.now{background:#17122B;box-shadow:inset 0 0 0 1.5px var(--accent)}
+.sk-steps li.now::before{background:var(--accent);color:#0C0A15}
+.sk-steps li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:700px){.sk-grid{grid-template-columns:1fr}.sk-col{justify-items:center}}
+@media (max-width:480px){.sk-how{grid-template-columns:1fr}.sk-how .sk-ph{margin-inline:auto;max-width:200px}}
+@media (prefers-reduced-motion:reduce){.sk-steps li{transition:none}}
 /* ── 스킬: 슬롯 + 설명 창 ── */
 .detail .row>:last-child{justify-self:center;width:100%}
 #sk-media{display:grid;justify-items:center}
@@ -576,14 +639,32 @@ footer{padding-block:28px 40px;text-align:center;font-size:14px;color:var(--text
   </div>
   <div class="detail frame glow" role="tabpanel" id="sk-panel" aria-labelledby="slot-0">
    <span class="bk tr"></span><span class="bk bl"></span>
-   <div class="row">
-    <div>
-     <p class="tag" style="font-size:15px"><i aria-hidden="true"></i><span id="sk-key">[ 스킬 1 ]</span></p>
-     <h3 id="sk-name">구간</h3>
-     <p id="sk-desc"></p>
-     <div class="eff" id="sk-eff"></div>
+   <p class="tag" style="font-size:15px"><i aria-hidden="true"></i><span id="sk-key">[ 스킬 1 ]</span></p>
+   <h3 id="sk-name">구간</h3>
+   <p class="sk-one" id="sk-one"></p>
+   <div class="sk-tl" id="sk-tl" hidden><p class="sk-tl-h" id="sk-tl-h"></p><div class="sk-rows" id="sk-rows"></div><p class="sk-leg"><span class="k"></span>남긴 부분<span class="c"></span>잘라 낸 부분</p></div>
+   <div class="sk-grid">
+    <div class="sk-col">
+     <p class="sk-sec" id="sk-cap">전 · 후 — 가운데를 밀어 보세요</p>
+     <div class="sk-ph sk-cmp" id="sk-cmp" role="slider" aria-label="원본과 결과 비교" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="가운데" tabindex="0">
+      <video id="sk-b" muted playsinline loop preload="auto" aria-hidden="true"></video>
+      <video id="sk-a" class="top" muted playsinline loop preload="auto" aria-hidden="true"></video>
+      <img id="sk-still" alt="" hidden>
+      <span class="lab" id="sk-lb">원본</span><span class="lab after r" id="sk-la"></span>
+      <span class="sk-ov" id="sk-ovb" hidden></span><span class="sk-ov r" id="sk-ova" hidden></span>
+      <span class="sk-dim" id="sk-dim" hidden></span>
+      <span class="bar" aria-hidden="true"></span><span class="knob" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6 3 12l6 6M15 6l6 6-6 6"/></svg></span>
+     </div>
+     <button type="button" class="sk-pp" id="sk-pp" aria-pressed="false">멈춤</button>
     </div>
-    <div id="sk-media"></div>
+    <div class="sk-side">
+     <p class="sk-more" id="sk-more"></p>
+     <p class="sk-sec">따라 하기</p>
+     <div class="sk-how">
+      <div class="sk-ph tall"><video id="sk-how" muted playsinline loop preload="auto" aria-label="앱 화면 녹화"></video></div>
+      <ol class="sk-steps" id="sk-steps"></ol>
+     </div>
+    </div>
    </div>
   </div>
  </div>
@@ -675,16 +756,62 @@ const $=id=>document.getElementById(id);
 const icons=[...document.querySelectorAll('.slot svg')].map(s=>s.outerHTML);
 const skNb=l=>{const m=l.match(/^(.*\S) (\S+)$/);if(!m)return l;const t=m[2],h=m[1];if(t.length<=3){const m2=h.match(/^(.*\S) (\S+)$/);if(m2)return m2[1]+' '+m2[2]+'\u00a0'+t;}return h+'\u00a0'+t;};
 const skFmt=d=>d.replace(/\. (?=\S)/g,'.\n').split('\n').flatMap(l=>{if(l.length>30){if(l.includes(' — '))return l.split(' — ').map((x,i,a)=>i<a.length-1?x+' —':x);const k=l.indexOf(', ');if(k>8)return [l.slice(0,k+1),l.slice(k+2)];}return [l];}).map(l=>skNb(l).replace(/&/g,'&amp;').replace(/</g,'&lt;')).join('<br>');
-const skills=[{"n":"구간","d":"양 끝 손잡이를 끌어 영상에서 남길 부분만 고릅니다. 원본은 그대로 남아요.","e":[["고르는 것","시작 · 끝"],["원본","그대로 보관"]],"img":"sk/span.jpg","vid":"sk/span.mp4"},{"n":"틀","d":"올릴 곳에 맞는 비율로 자르고 확대합니다. 들찍과 수평도 여기서 켜요.","e":[["비율","원본 · 9:16 · 3:4 · 4:5 · 1:1 · 16:9"],["함께","들찍 · 수평"]],"img":"sk/frame.jpg","vid":"sk/frame.mp4"},{"n":"붓","d":"손과 발이 지나간 길을 빛나는 선으로 그려 무브가 한눈에 보이게 합니다.","e":[["넣는 법","+ 붓 구간"],["그리는 것","손 · 발의 궤적"]],"img":"sk/brush.jpg","vid":"sk/brush.mp4"},{"n":"블러","d":"함께 찍힌 사람들의 얼굴을 흐리게 가립니다.","e":[["넣는 법","+ 블러 구간"],["가리는 것","영상 속 얼굴"]],"img":"sk/blur.jpg","vid":null},{"n":"글","d":"원하는 구간에 글을 넣습니다. 암장 · 문제 · 시도는 눌러서 바로 넣어요.","e":[["넣는 법","+ 글 구간"],["바로 넣기","암장 · 문제 · 시도"]],"img":"sk/text.jpg","vid":"sk/text.mp4"},{"n":"그리기","d":"화면 위에 손가락으로 직접 그립니다.","e":[["넣는 법","+ 그림 구간"],["쓰는 곳","홀드 표시 · 화살표"]],"img":"sk/draw.jpg","vid":"sk/draw.mp4"},{"n":"배속","d":"구간마다 속도를 따로 줍니다. 크럭스만 느리게, 나머지는 빠르게.","e":[["넣는 법","+ 배속 구간"],["속도","느리게 · 빠르게"]],"img":"sk/speed.jpg","vid":"sk/speed.mp4"},{"n":"마무리","d":"마지막에 붙는 엔딩 카드와, 영상의 첫 장면이 될 커버를 고릅니다.","e":[["엔딩 카드","스타일 · 꾸미기"],["커버","첫 장면 지정"]],"img":"sk/finish.jpg","vid":"sk/finish.mp4"}];
+const skills=[{"k":"span","n":"구간","one":"영상에서 남길 부분만 골라요.","more":"찍기 전 준비나 내려온 뒤처럼 필요 없는 앞뒤를 잘라 냅니다. 원본은 그대로 남아서 언제든 다시 고칠 수 있어요.","la":"구간","steps":[[0,"편집 → «구간»","편집을 열면 처음 보이는 칸이에요"],[2.4,"앞 손잡이를 끌어 시작 고르기","끄는 동안 그 장면이 보여요"],[4.2,"뒤 손잡이를 끌어 끝 고르기","남는 길이가 «결과»에 바로 나와요"],[7.4,"재생해서 확인 → «완성»","앨범 «완등»에 새 영상이 생겨요"]],"tl":{"vid":"span_o","lab":"원본 재생","head":"23초 → 9초","film":"span_f","fd":23,"rate":[[0,2.7,3],[12,30,3]],"dim":[[0,3,"잘라 냄 — 결과에 없어요"],[12,99,"잘라 냄 — 결과에 없어요"]],"rows":[{"lab":"원본","len":23.03,"segs":[{"f":0,"t":3,"k":"cut","x":"잘라 냄"},{"f":3,"t":12,"k":"keep","x":"남김"},{"f":12,"t":23,"k":"cut","x":"잘라 냄"}],"ph":[[0,23.1,0,23.03]]},{"lab":"결과","len":9,"segs":[{"f":3,"t":12,"k":"keep"}],"ph":[[3,12,0,9]],"none":"지금 장면은 결과에 없어요"}]}},{"k":"frame","n":"틀","one":"올릴 곳에 맞는 비율로 자르고, 화면이 나를 따라가게 해요.","more":"릴스 · 스토리는 9:16, 피드는 4:5처럼 비율을 고르고 확대합니다. «들찍»을 켜고 화면에서 나를 한 번 누르면 들고 찍은 것처럼 화면이 나를 따라가요. 기울어진 영상은 «수평»으로 바로잡아요.","la":"9:16 · 들찍","steps":[[0,"편집 → «틀» → 비율 고르기","원본 · 9:16 · 3:4 · 4:5 · 1:1 · 16:9"],[5,"확대 막대 끌기","크게 당길 거면 4K로 찍으면 선명해요"],[7.4,"«들찍» → 화면에서 나를 누르기 → «확인»","네모 틀이 나를 따라다녀요"],[12.6,"재생해서 확인 → «완성»","앨범 «완등»에 새 영상이 생겨요"]]},{"k":"brush","n":"붓","one":"손과 발이 지나간 길을 빛나는 선으로 남겨요.","more":"빠른 무브는 눈으로 따라가기 어렵죠. 앱이 영상 속 손과 발을 스스로 찾아 그 길을 그려 줍니다. 찾는 일은 폰 안에서만 해요.","la":"붓","steps":[[0,"편집 → «붓» → «+ 붓 구간»","영상 전체에 붓 구간이 생겨요"],[3.2,"그릴 손 · 발 고르기","오른손 · 왼손 · 오른발 · 왼발, 여러 개도 돼요"],[4.4,"선 모양 고르기","기본 · 네온 · 먹"],[5.9,"재생해서 확인 → «완성»","앨범 «완등»에 새 영상이 생겨요"]]},{"k":"blur","n":"블러","one":"함께 찍힌 사람들의 얼굴을 흐리게 가려요.","more":"블러 구간을 넣고 «완성»을 누르면 그 구간에서 얼굴이 보이는 순간만 찾아 흐립니다. 뒷모습은 그대로 두고, 고개를 돌려 옆얼굴이 보일 때만 가려요. 찾는 일은 폰 안에서만 해요.","la":"블러","steps":[[0,"편집 → «블러» → «+ 블러 구간»","영상 전체에 블러 구간이 생겨요"],[4,"화면 위 표시로 구간 확인","미리보기에는 표시만 나와요"],[9.6,"재생해서 확인 → «완성»","만들 때 얼굴이 보이는 순간만 흐려요"]],"x0":30},{"k":"text","n":"글","one":"원하는 구간에 글을 넣어요.","more":"문제 번호와 시도 횟수는 눌러서 바로 넣고, 하고 싶은 말은 직접 씁니다. 글꼴을 고르고 끌어서 자리를 옮겨요.","la":"글","steps":[[0,"편집 → «글» → «문제» · «시도»","누르면 영상 위에 바로 붙어요"],[5.2,"«+ 글 구간» → 글 쓰기","하고 싶은 말을 직접 적어요"],[12.9,"글꼴 고르고 «완료»","기본 · 검은고딕 · 주아 · 명조 · 손글씨"],[15.6,"끌어서 자리 옮기기 → 재생","앨범 «완등»에 새 영상이 생겨요"]]},{"k":"draw","n":"그리기","one":"화면 위에 손가락으로 직접 그려요.","more":"다음에 잡을 홀드에 동그라미를 치거나 화살표로 손이 갈 길을 알려 줄 때 씁니다. 펜 · 마커 · 네온 · 화살표 · 채우기 중 고르고 색을 바꿔요.","la":"그리기","steps":[[0,"편집 → «그리기» → «+ 그림 구간»","그림판이 열려요"],[4.5,"«네온» 고르고 색 고르기","펜 · 마커 · 네온 · 화살표 · 채우기"],[6,"잡을 홀드에 동그라미","색을 바꿔 다음 홀드도"],[11.4,"«화살표»로 손이 갈 길 긋기","끄는 쪽으로 화살촉이 생겨요"],[17.6,"«완료» → 재생해서 확인","앨범 «완등»에 새 영상이 생겨요"]],"x0":22},{"k":"speed","n":"배속","one":"구간마다 속도를 따로 줘요.","more":"크럭스는 느리게, 오래 걸린 곳은 빠르게. 구간을 넣고 양 끝을 끌어 범위를 고른 뒤 속도를 정합니다.","la":"0.5×","steps":[[0,"편집 → «배속» → «+ 배속 구간»","영상 전체에 0.5× 구간이 생겨요"],[5.6,"양 끝을 끌어 범위 고르기","느리게 볼 크럭스만 남겨요"],[10.4,"속도 고르기","0.5× · 0.25× · 2× · 4×"],[12.2,"재생해서 확인 → «완성»","앨범 «완등»에 새 영상이 생겨요"]],"tl":{"vid":"speed_a","lab":"결과 재생","head":"크럭스 4.4초 → 8.8초","film":"speed_f","fd":7,"rows":[{"lab":"원본 2–9초","len":7,"segs":[{"f":0,"t":1},{"f":1,"t":5.4,"k":"keep","x":"이 부분을"},{"f":5.4,"t":7}],"ph":[[0,1,0,1],[1,9.8,1,5.4],[9.8,11.5,5.4,7]]},{"lab":"결과","len":11.4,"segs":[{"f":0,"t":1},{"f":1,"t":5.4,"w":8.8,"k":"slow","x":"0.5× — 두 배 길게"},{"f":5.4,"t":7}],"ph":[[0,11.5,0,11.4]]}]}},{"k":"finish","n":"마무리","one":"마지막 엔딩 카드와 첫 장면 커버를 정해요.","more":"엔딩 카드는 여섯 가지 스타일과 색 중에서 고르고, 문제 · 결과 · 날짜처럼 보일 정보를 켜고 끕니다. 커버는 앨범과 SNS에서 처음 보일 장면이에요.","la":"엔딩 카드","steps":[[0,"편집 → «마무리» → 엔딩 카드 «꾸미기»","스타일 · 색 · 보일 정보"],[5,"스타일과 색 고르고 «완료»","기본 · 초크 · 심전도 · 스테이지 클리어 · 일기장 · RPG"],[10.6,"장면을 고르고 «커버» 누르기","그 장면이 첫 장면이 돼요"],[13.6,"끝까지 재생해서 확인 → «완성»","엔딩 카드가 마지막에 붙어요"]],"tl":{"vid":"finish_a","lab":"결과 재생","head":"마지막에 엔딩 카드","film":"finish_f","fd":4,"rows":[{"lab":"원본 마지막","len":4,"segs":[{"f":0,"t":4}],"ph":[[0,4,0,4]],"none":"원본은 여기서 끝"},{"lab":"결과 마지막","len":5.17,"segs":[{"f":0,"t":4},{"w":1.17,"k":"card","x":"엔딩 카드"}],"ph":[[0,5.2,0,5.17]]}]}}];
 const slots=[...document.querySelectorAll('.slot')];
+const skV={b:$('sk-b'),a:$('sk-a'),h:$('sk-how')},skC=$('sk-cmp');
+const skRM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let skCur=null,skPaused=skRM,skSeen=false;
+const skAll=()=>[skV.b,skV.a,skV.h].filter(v=>v.getAttribute('src'));
+function skPlay(){if(skPaused||!skSeen)return;skAll().forEach(v=>v.play().catch(()=>{}));}
+function skPause(){skAll().forEach(v=>v.pause());}
+function skX(p){p=Math.max(0,Math.min(100,p));skC.style.setProperty('--x',p+'%');skC.setAttribute('aria-valuenow',Math.round(p));skC.setAttribute('aria-valuetext',p<34?'결과가 더 넓게':p>66?'원본이 더 넓게':'가운데');}
 function pick(i){
- const s=skills[i];
+ const s=skills[i];skCur=s;
  slots.forEach((b,k)=>{b.setAttribute('aria-selected',k===i?'true':'false');b.tabIndex=k===i?0:-1;});
  $('sk-panel').setAttribute('aria-labelledby','slot-'+i);
- $('sk-key').textContent='[ 스킬 '+(i+1)+' ]';$('sk-name').textContent=s.n;$('sk-desc').innerHTML=skFmt(s.d);
- $('sk-eff').innerHTML=s.e.map(([a,b])=>'<div><span>'+a+'</span><b>'+b+'</b></div>').join('');
- $('sk-media').innerHTML=s.vid?'<video class="shot" src="img/'+s.vid+'" poster="img/'+s.img+'" muted loop playsinline '+(matchMedia('(prefers-reduced-motion: reduce)').matches?'controls':'autoplay')+' aria-label="'+s.n+'을(를) 쓴 영상"></video>':'<img class="shot" src="img/'+s.img+'" alt="'+s.n+'을(를) 쓴 화면">';
+ $('sk-key').textContent='[ 스킬 '+(i+1)+' ]';$('sk-name').textContent=s.n;$('sk-one').textContent=s.one;$('sk-more').textContent=s.more;
+ $('sk-la').textContent=s.la;
+ const still=!!s.still,tl=s.tl;skC.classList.toggle('still',still);skC.classList.toggle('tl',!!tl);
+ $('sk-cap').textContent=still?'결과 사진':tl?'원본과 결과 — 시간으로 비교':'전 · 후 — 가운데를 밀어 보세요';
+ $('sk-tl').hidden=!tl;$('sk-dim').hidden=true;skV.a.playbackRate=1;
+ if(tl){skC.removeAttribute('role');skC.removeAttribute('tabindex');skC.removeAttribute('aria-hidden');$('sk-la').textContent=tl.lab;$('sk-tl-h').textContent=tl.head;
+  const mx=Math.max(...tl.rows.map(r=>r.len));
+  document.querySelector('.sk-leg').hidden=!tl.rows.some(r=>r.segs.some(g=>g.k==='cut'));$('sk-rows').innerHTML=tl.rows.map((r,ri)=>'<div class="sk-row"><p class="sk-rl"><b>'+r.lab+'</b> '+(+r.len.toFixed(1))+'초<span class="sk-none" id="sk-none'+ri+'" hidden>'+(r.none||'')+'</span></p><div class="sk-bar" style="width:'+(r.len/mx*100)+'%">'+r.segs.map(g=>{const w=g.w||(g.t-g.f),d=g.t-g.f;
+   const bg=g.k==='card'?'':'background-image:url(img/sk2/'+tl.film+'.jpg);background-size:'+(tl.fd/d*100)+'% 100%;background-position:'+(Math.abs(tl.fd-d)<.01?0:g.f/(tl.fd-d)*100)+'% 0;';
+   return '<div class="sk-seg '+(g.k||'')+'" style="flex:'+w+' 1 0;'+bg+'">'+(g.x&&(w/mx>=.16||g.k==='card'||g.k==='slow')?'<i>'+g.x+'</i>':'')+'</div>';}).join('')+'<span class="sk-head" id="sk-head'+ri+'"></span></div></div>').join('');
+ }
+ if(still||tl){skC.removeAttribute('role');skC.removeAttribute('tabindex');skC.setAttribute('aria-hidden','true');}else{skC.setAttribute('role','slider');skC.tabIndex=0;skC.removeAttribute('aria-hidden');}
+ const im=$('sk-still');im.hidden=!still;if(still){im.src='img/'+s.still;im.alt=s.n+' 결과 화면 — 얼굴이 흐려져 있어요';}else{im.removeAttribute('src');}
+ [['b','_b'],['a','_a']].forEach(([k,f])=>{const v=skV[k],off=still||(tl&&k==='b');v.hidden=off;if(off){v.pause();v.removeAttribute('src');v.load();}else{v.src='img/sk2/'+(tl?tl.vid:s.k+f)+'.mp4';}});
+ skV.h.src='img/sk2/'+s.k+'_h.mp4';skV.h.setAttribute('aria-label',s.n+' 따라 하기 — 앱 화면 녹화');
+ $('sk-steps').innerHTML=s.steps.map(([t,b,x],k)=>'<li tabindex="0" data-t="'+t+'"'+(k?'':' class="now"')+'><b>'+b+'</b><span>'+x+'</span></li>').join('');
+ [...$('sk-steps').children].forEach(l=>{const go=()=>{skV.h.currentTime=+l.dataset.t+.05;if(!skPaused)skV.h.play().catch(()=>{});};l.onclick=go;l.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
+ $('sk-ovb').hidden=$('sk-ova').hidden=true;
+ skX(s.x0||50);skPlay();
 }
+// 전·후 맞추기 · 덧붙인 글 — 원본 시각을 따른다
+// 타임라인 — 재생 위치를 두 줄에 옮기고, 잘라 낸 곳은 어둡게 · 빨리 넘긴다
+function skTL(){const tl=skCur.tl,t=skV.a.currentTime;
+ tl.rows.forEach((r,ri)=>{const m=r.ph.find(([a,b])=>t>=a&&t<b),h=$('sk-head'+ri),n=$('sk-none'+ri);if(!h)return;h.hidden=!m;if(n)n.hidden=!!m||!r.none;
+  if(m){const [a,b,p,q]=m;h.style.left=Math.min(100,(p+(t-a)/(b-a)*(q-p))/r.len*100)+'%';}});
+ const dm=(tl.dim||[]).find(([a,b])=>t>=a&&t<b),el=$('sk-dim');el.hidden=!dm;if(dm)el.textContent=dm[2];
+ const rt=(tl.rate||[]).find(([a,b])=>t>=a&&t<b);const want=rt?rt[2]:1;if(skV.a.playbackRate!==want)skV.a.playbackRate=want;}
+setInterval(()=>{if(skCur&&skCur.tl)skTL();},100);
+setInterval(()=>{if(!skCur||skCur.still||skCur.tl)return;const m=skV.b,v=skV.a;
+ if(Math.abs(v.currentTime-m.currentTime)>.08)v.currentTime=m.currentTime;if(m.paused!==v.paused)m.paused?v.pause():v.play().catch(()=>{});
+ const t=m.currentTime,ov=skCur.ov||[];['b','a'].forEach(sd=>{const o=ov.find(o=>o.s===sd&&t>=o.f&&t<o.t),el=$('sk-ov'+sd);el.hidden=!o;if(o)el.textContent=o.x;});},200);
+skV.h.addEventListener('timeupdate',()=>{const li=[...$('sk-steps').children];let k=0;li.forEach((l,i)=>{if(skV.h.currentTime>=+l.dataset.t)k=i;});li.forEach((l,i)=>l.classList.toggle('now',i===k));});
+// 밀기 — 끌거나 눌러서, 키보드는 좌우 화살표
+(()=>{let drag=false;const at=x=>{const r=skC.getBoundingClientRect();skX((x-r.left)/r.width*100);};
+ skC.addEventListener('pointerdown',e=>{if(skC.classList.contains('still')||skC.classList.contains('tl'))return;drag=true;skC.setPointerCapture(e.pointerId);at(e.clientX);});
+ skC.addEventListener('pointermove',e=>{if(drag)at(e.clientX);});
+ ['pointerup','pointercancel'].forEach(t=>skC.addEventListener(t,()=>drag=false));
+ skC.addEventListener('keydown',e=>{const n=+skC.getAttribute('aria-valuenow'),m={ArrowLeft:-5,ArrowRight:5,Home:-100,End:100}[e.key];if(m!==undefined){e.preventDefault();skX(n+m);}});})();
+// 멈춤 · 재생 — 움직임 줄이기면 멈춘 채로 연다
+const skPP=$('sk-pp');const skPPset=()=>{skPP.textContent=skPaused?'재생':'멈춤';skPP.setAttribute('aria-pressed',skPaused?'true':'false');};skPPset();
+skPP.onclick=()=>{skPaused=!skPaused;skPPset();skPaused?skPause():skPlay();};
+// 보일 때만 돈다 — 스킬 판이 닫혀 있거나 화면 밖이면 멈춘다
+new IntersectionObserver(es=>{skSeen=es[0].isIntersecting;skSeen?skPlay():skPause();},{threshold:.15}).observe($('sk-panel'));
 slots.forEach((b,k)=>{b.onclick=()=>pick(k);b.onkeydown=e=>{const n={ArrowRight:1,ArrowLeft:-1,ArrowDown:4,ArrowUp:-4}[e.key];if(n){e.preventDefault();const j=(k+n+8)%8;slots[j].focus();pick(j);}}});
 pick(0);
 
