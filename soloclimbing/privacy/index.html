@@ -32,7 +32,7 @@
 <body><main>
 <h1>Solo Climbing 개인정보처리방침</h1>
 
-<p><strong>시행일: 2026년 10월 28일</strong> (이전 판: 2026년 10월 27일 · 10월 19일 · 10월 17일 · 10월 16일 · 10월 3일 · 10월 2일 · 10월 1일 · 9월 17일)</p>
+<p><strong>시행일: 2026년 10월 30일</strong> (이전 판: 2026년 10월 28일 · 10월 27일 · 10월 19일 · 10월 17일 · 10월 16일 · 10월 3일 · 10월 2일 · 10월 1일 · 9월 17일)</p>
 
 <p>Solo Climbing(이하 &quot;앱&quot;)을 만든 사람은 이용자의 이름 · 연락처 · 영상 같은 개인정보를 수집하지 않습니다.<br>
 다만 무료판에는 <strong>Google AdMob 광고</strong>가 들어가며, 광고를 보여 주기 위해 Google 이 일부 정보를 수집합니다(5절).<br>
@@ -277,7 +277,7 @@ Meta 의 개인정보처리방침: <a href="https://www.facebook.com/privacy/pol
 <ul>
 <li>앱을 만든 사람은 <strong>이용자의 정보를 제3자에게 제공하거나 팔지 않습니다.</strong></li>
 <li>5절의 광고 정보는 Google AdMob 이, 5-2절의 광고 성과 정보는 Meta(iPhone)가, 6절의 비정상 종료 기록 · 사용 통계는 Google Firebase 가, 7절의 결제는 Google Play(Android) · Apple(iPhone)이 직접 처리합니다.</li>
-<li>12절의 홈페이지 문의는 Google Firebase(Cloud Firestore)에 저장됩니다. 저장만 맡기며, 읽는 사람은 앱을 만든 사람뿐입니다.</li>
+<li>12절의 홈페이지 문의는 Google Firebase(Cloud Firestore)에 저장됩니다. 저장만 맡기며, 읽는 사람은 앱을 만든 사람뿐입니다. 새 문의가 왔다는 알림은 Cloudflare(Workers)를 거쳐 앱을 만든 사람의 Slack 으로만 갑니다. Cloudflare 와 Slack 은 전달과 알림만 맡습니다.</li>
 </ul>
 
 <hr>
@@ -322,6 +322,7 @@ Meta 의 개인정보처리방침: <a href="https://www.facebook.com/privacy/pol
 앱의 기능이 바뀌어 다루는 정보가 달라지는 경우에만 바뀝니다.</p>
 
 <ul>
+<li>2026-10-30: 홈페이지 문의가 오면 앱을 만든 사람의 Slack 으로 알림이 가도록 하며 8절과 12절에 알림 내용을 더했습니다. 앱이 다루는 정보는 바뀌지 않았습니다.</li>
 <li>2026-10-28: 홈페이지(welcomemyworld.dev)에 문의 창을 열며 12절을 새로 쓰고, 머리말과 8절을 고쳤습니다. 문의 절은 13절로 밀렸습니다. 앱이 다루는 정보는 바뀌지 않았습니다.</li>
 <li>2026-10-27: 비정상 종료 기록과 사용 통계를 위한 Google Firebase(Crashlytics · Analytics · Remote Config)를 두 판에 더하며(Android 1.4.0 · iPhone 다음 업데이트) 6절을 새로 쓰고,</li>
 </ul>
@@ -366,6 +367,7 @@ Meta 의 개인정보처리방침: <a href="https://www.facebook.com/privacy/pol
 <li><strong>답장 받을 곳(선택):</strong> 인스타그램 아이디나 이메일을 적은 경우에만 받으며, 그 문의에 답하는 데에만 씁니다.</li>
 <li><strong>받지 않는 것:</strong> 이름 · 계정 · 광고 ID 는 받지 않으며, 문의 창은 쿠키를 쓰지 않습니다. 같은 글이 거듭 보내지지 않도록 마지막으로 보낸 시각만 이용자의 브라우저 안에 적어 둡니다.</li>
 <li><strong>저장과 열람:</strong> Google Firebase 의 Cloud Firestore(서울 지역)에 저장되며, 보안 규칙으로 앱을 만든 사람의 계정만 읽을 수 있게 막아 두었습니다.</li>
+<li><strong>알림:</strong> 새 문의가 오면 앱을 만든 사람의 Slack 으로 알림이 갑니다. 알림에는 문의 유형, 적은 글의 앞부분(500자까지), 고른 경우 화면 이름 · 폰 종류 · 앱 버전 · 암장 이름, 그리고 답장 받을 곳을 적었는지 여부만 담습니다. 답장 받을 곳 자체는 알림에 담지 않습니다. 알림은 Cloudflare Workers 를 거쳐 보내며, Cloudflare 는 전달만 맡습니다.</li>
 <li><strong>쓰는 곳:</strong> 문의에 답하고 앱을 고치는 데에만 씁니다. 다른 목적으로 쓰거나 남에게 넘기지 않습니다.</li>
 <li><strong>보관:</strong> 답하거나 반영을 마치면 지우며, 늦어도 받은 날로부터 1년 안에 지웁니다. 그 전에 지우기를 원하시면 13절의 이메일로 알려 주십시오.</li>
 </ul>
