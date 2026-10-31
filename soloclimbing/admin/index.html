@@ -56,9 +56,62 @@ main{max-width:760px;margin:0 auto;display:grid;gap:16px}
 .empty{padding:28px 12px;text-align:center;color:var(--text3)}
 .copy{font-size:12px;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 @media (max-width:420px){.stats b{font-size:19px}}
+
+/* ── 탭 (문의함 · 대시보드) — 주소는 /soloclimbing/admin/ 그대로, 해시로만 가른다 ── */
+.tabs{display:flex;gap:6px;padding:4px;border-radius:12px;background:var(--surface)}
+.tabs button{flex:1;min-height:40px;padding:0 10px;border-radius:9px;font:700 14px/1 var(--font);color:var(--text2)}
+.tabs button[aria-pressed="true"]{background:var(--raised);color:#F1EDFF;box-shadow:inset 0 0 0 1.5px var(--accent)}
+.tabs .n{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(167,143,255,.22);color:#F1EDFF;font-size:11px;vertical-align:1px}
+
+/* ── 대시보드 ──────────────────────────────────────────────────────────── */
+.dash{display:grid;gap:14px}
+.at{font-size:12px;color:var(--text3)}
+.pan{display:grid;gap:11px;padding:14px;border-radius:12px;background:var(--surface)}
+.pan h2{font:700 14px/1 var(--font);letter-spacing:.3px;color:var(--text2);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pan h2 em{font-style:normal;font-weight:500;font-size:12px;color:var(--text3)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.tile{display:grid;gap:3px;padding:10px;border-radius:10px;background:var(--raised);min-width:0}
+.tile span{font-size:11.5px;color:var(--text3);overflow-wrap:anywhere}
+.tile b{font:700 clamp(16px,4.9vw,20px)/1.15 var(--font);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tile.hi b{color:var(--accent)}.tile.up b{color:#7EE2AE}.tile.down b{color:#FDA29B}
+.spark{display:block;width:100%;height:auto;aspect-ratio:600/120;overflow:visible}
+.bars{display:grid;gap:7px}
+.bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;font-size:13px}
+.bar .n{color:var(--text2);overflow-wrap:anywhere}
+.bar .v{font-variant-numeric:tabular-nums;font-weight:700}
+.bar .t{grid-column:1/-1;height:7px;border-radius:999px;background:var(--bg)}
+.bar .t i{display:block;height:100%;border-radius:999px;background:var(--accent)}
+.warn{padding:10px 12px;border-radius:10px;background:rgba(249,112,102,.12);color:#FDA29B;font-size:13px;overflow-wrap:anywhere}
+
+/* ── 지금 (실시간) — stats/live 를 onSnapshot 으로 듣는다 ──────────────────── */
+.pan.now{box-shadow:inset 0 0 0 1.5px rgba(50,213,131,.3)}
+.now .ping{display:inline-flex;align-items:center;gap:6px;color:#7EE2AE;font-weight:700;font-size:12px}
+.now .ping i{width:7px;height:7px;border-radius:50%;background:#32D583}
+@media (prefers-reduced-motion:no-preference){.now .ping i{animation:ping 2.2s ease-out infinite}}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(50,213,131,.55)}70%{box-shadow:0 0 0 7px rgba(50,213,131,0)}100%{box-shadow:0 0 0 0 rgba(50,213,131,0)}}
+.now .head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.now .big{font:800 clamp(34px,10vw,46px)/1 var(--font);font-variant-numeric:tabular-nums;color:#7EE2AE}
+.now .big small{font:500 13px/1 var(--font);color:var(--text3);margin-left:7px}
+.mins{display:flex;align-items:flex-end;gap:2px;height:56px;padding-top:4px}
+.mins i{flex:1 1 0;min-width:0;min-height:2px;border-radius:2px 2px 0 0;background:var(--accent);opacity:.8}
+.mins i.zero{background:var(--raised);opacity:1}
+.mins i.last{opacity:1;background:#7EE2AE}
+.axis{display:flex;justify-content:space-between;font-size:11px;color:var(--text3)}
+.chips2{display:flex;flex-wrap:wrap;gap:5px}
+.chips2 span{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--raised);color:var(--text2);overflow-wrap:anywhere}
+.chips2 span b{color:var(--text);font-variant-numeric:tabular-nums}
+.sub2{font-size:12px;color:var(--text3);margin-top:-4px}
+.hint{display:grid;gap:10px;justify-items:center;padding:26px 14px;border-radius:12px;background:var(--surface);text-align:center}
+.hint b{font-size:15px}.hint p{font-size:13.5px;color:var(--text2);max-width:46ch}
+.hint code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--raised);padding:2px 6px;border-radius:5px;overflow-wrap:anywhere}
 </style></head><body>
 <main>
- <div class="top"><p class="tag"><i aria-hidden="true"></i>[ 문의함 ]</p><div class="who" id="who" hidden><span id="who-n">관리자로 로그인됨</span><button type="button" id="out">로그아웃</button></div></div>
+ <div class="top"><p class="tag"><i aria-hidden="true"></i>[ 관리자 ]</p><div class="who" id="who" hidden><span id="who-n">관리자로 로그인됨</span><button type="button" id="out">로그아웃</button></div></div>
+
+ <div class="tabs" id="tabs" role="tablist" hidden>
+  <button type="button" role="tab" data-t="문의" aria-pressed="true">문의함<span class="n" id="tab-n" hidden></span></button>
+  <button type="button" role="tab" data-t="대시보드" aria-pressed="false">대시보드</button>
+ </div>
 
  <section class="gate" id="gate">
   <div class="box">
@@ -78,6 +131,8 @@ main{max-width:760px;margin:0 auto;display:grid;gap:16px}
    <div class="list" id="list"></div>
   </div>
  </section>
+
+ <section id="dash" class="dash" hidden aria-label="대시보드"></section>
 </main>
 
 <script type="module">
@@ -88,6 +143,10 @@ const $ = id => document.getElementById(id);
 const TY = { bug: ['불편해요 · 오류', 'var(--bug)'], idea: ['이런 기능 있으면', 'var(--idea)'], gym: ['암장 정보가 달라요', 'var(--gym)'], etc: ['기타', 'var(--etc)'] };
 const ST = { new: '새 글', seen: '확인함', done: '반영됨' };
 let items = [], fType = 'all', fSt = 'all', unsub = null;
+// 탭 — 기본은 문의함이다. Slack DM 의 «전체 보기» 를 눌렀을 때 지금과 똑같이 보여야 한다
+let 로그인 = false, 탭 = location.hash === '#대시보드' ? '대시보드' : '문의', 통계 = null, 통계상태 = '아직', 통계읽기 = null;
+// 실시간 — stats/live. 하루치와 달리 한 번 읽고 끝이 아니라 계속 듣는다(onSnapshot)
+let 실시간 = null, unsubLive = null;
 const show = (el, m) => { el.textContent = m; el.hidden = !m; };
 
 if (!C) { show($('gate-msg'), 'Firebase 설정이 아직 들어가지 않았어요.'); $('in').disabled = true; }
@@ -101,14 +160,35 @@ else {
   $('in').onclick = async () => { show($('gate-msg'), ''); try { await authM.signInWithPopup(auth, prov); } catch (e) { if (/popup/.test(e.code || '')) authM.signInWithRedirect(auth, prov); else show($('gate-msg'), '로그인하지 못했어요. 다시 눌러 주세요.'); } };
   $('out').onclick = () => authM.signOut(auth);
   authM.getRedirectResult(auth).catch(() => {});
+  // 대시보드 자료 — 이 PC 의 stats/collect.js 가 하루 한 번 쓴다. 읽기는 한 번뿐이다(실시간 아님)
+  통계읽기 = async () => {
+    통계상태 = '읽는중'; 뷰();
+    try {
+      const d = await fsM.getDoc(fsM.doc(db, 'stats', 'summary'));
+      통계 = d.exists() ? d.data() : null;
+      통계상태 = 통계 ? '됨' : '없음';
+    } catch (e) {
+      통계 = null;
+      통계상태 = e.code === 'permission-denied' ? '막힘' : '실패';
+    }
+    뷰();
+  };
   authM.onAuthStateChanged(auth, user => {
     if (unsub) { unsub(); unsub = null; }
-    if (!user) { $('gate').hidden = false; $('box').hidden = true; $('who').hidden = true; return; }
+    if (unsubLive) { unsubLive(); unsubLive = null; }
+    if (!user) { 로그인 = false; 통계 = null; 실시간 = null; 통계상태 = '아직'; $('who').hidden = true; 뷰(); return; }
     $('who').hidden = false;
+    로그인 = true; 뷰();
+    통계읽기();
+    // 수집기가 1분마다 새로 쓰면 페이지를 열어 둔 채로 숫자가 바뀐다
+    unsubLive = fsM.onSnapshot(fsM.doc(db, 'stats', 'live'), d => {
+      실시간 = d.exists() ? d.data() : null;
+      if (탭 === '대시보드') 대시보드();
+    }, () => { 실시간 = null; if (탭 === '대시보드') 대시보드(); });
     const q = fsM.query(fsM.collection(db, 'inquiries'), fsM.orderBy('createdAt', 'desc'), fsM.limit(300));
     unsub = fsM.onSnapshot(q, snap => {
       items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      $('gate').hidden = true; $('box').hidden = false; render();
+      로그인 = true; 뷰(); render();
     }, e => {
       // 오너 계정이 아니면 규칙이 읽기를 막는다
       $('box').hidden = true; $('gate').hidden = false;
@@ -154,5 +234,314 @@ function render() {
 }
 $('stats').onclick = e => { const b = e.target.closest('button'); if (!b) return; fSt = fSt === b.dataset.s ? 'all' : b.dataset.s; render(); };
 $('types').onclick = e => { const b = e.target.closest('button'); if (!b) return; fType = b.dataset.k; render(); };
+
+// ── 탭 ────────────────────────────────────────────────────────────────────
+function 뷰() {
+  $('gate').hidden = 로그인;
+  $('tabs').hidden = !로그인;
+  $('box').hidden = !로그인 || 탭 !== '문의';
+  $('dash').hidden = !로그인 || 탭 !== '대시보드';
+  for (const b of $('tabs').children) b.setAttribute('aria-pressed', String(b.dataset.t === 탭));
+  const 새글 = items.filter(i => (i.status || 'new') === 'new').length;
+  const n = $('tab-n'); n.textContent = 새글 || ''; n.hidden = !새글;
+  if (탭 === '대시보드') 대시보드();
+}
+$('tabs').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  탭 = b.dataset.t;
+  history.replaceState(null, '', 탭 === '대시보드' ? '#대시보드' : location.pathname);
+  뷰();
+};
+addEventListener('hashchange', () => { 탭 = location.hash === '#대시보드' ? '대시보드' : '문의'; 뷰(); });
+
+// ── 대시보드 ──────────────────────────────────────────────────────────────
+const 원 = 1400;                                    // 1달러를 원으로 어림한다 (/수익 과 같은 값)
+const 수 = n => (Number(n) || 0).toLocaleString('ko-KR');
+const 달러 = n => 'US$' + (Number(n) || 0).toFixed(2);
+const 날 = s => String(s || '').slice(5).replace('-', '/');
+// 갈래마다 자료가 끊기는 날이 다르다 — AdMob 은 네 시간, Play 리포트는 며칠 늦다.
+// «최근 7일» 이 언제까지의 7일인지 적지 않으면 오해한다
+const 까지 = days => (days && days.length) ? 날(days[days.length - 1].date) + ' 까지' : '자료 없음';
+const 만들기 = (t, c, 글) => { const e = document.createElement(t); if (c) e.className = c; if (글 != null) e.textContent = 글; return e; };
+
+/** 숫자 타일 묶음 */
+function 타일들(목록) {
+  const w = 만들기('div', 'tiles');
+  for (const [라벨, 값, 결] of 목록) {
+    const d = 만들기('div', 'tile' + (결 ? ' ' + 결 : ''));
+    d.append(만들기('span', null, 라벨), 만들기('b', null, 값));
+    w.append(d);
+  }
+  return w;
+}
+
+/** 30일 선 그림 — 눈금과 값이 한 자로 그려진다 */
+function 스파크(days, 값꺼내기, 꾸밈 = {}) {
+  const 값 = days.map(값꺼내기);
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'spark');
+  // 글자가 제 크기로 보이도록 자리를 넉넉히 잡는다 — 좁은 viewBox 를 늘이면 글자만 커진다
+  const W = 600, H = 120, 아래 = 24, 위 = 14;      // 아래 24 는 날짜 글자 자리, 위 14 는 꼭대기 값 자리
+  // 가로로 늘이지 않는다 — 늘이면 날짜 · 금액 글자까지 함께 늘어나 못생겨진다
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('role', 'img');
+  const 큰 = Math.max(...값, 꾸밈.바닥 || 0) || 1;
+  const x = i => 값.length < 2 ? W / 2 : (i / (값.length - 1)) * W;
+  const y = v => H - 아래 - (v / 큰) * (H - 아래 - 위);
+  const 점 = 값.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+
+  const 면 = document.createElementNS(svg.namespaceURI, 'polygon');
+  면.setAttribute('points', `0,${H - 아래} ${점} ${W},${H - 아래}`);
+  면.setAttribute('fill', 'rgba(167,143,255,.16)');
+  const 선 = document.createElementNS(svg.namespaceURI, 'polyline');
+  선.setAttribute('points', 점); 선.setAttribute('fill', 'none');
+  선.setAttribute('stroke', '#A78FFF'); 선.setAttribute('stroke-width', '2.5');
+  선.setAttribute('stroke-linejoin', 'round');
+  const 바닥 = document.createElementNS(svg.namespaceURI, 'line');
+  바닥.setAttribute('x1', 0); 바닥.setAttribute('x2', W);
+  바닥.setAttribute('y1', H - 아래); 바닥.setAttribute('y2', H - 아래);
+  바닥.setAttribute('stroke', '#2A2A34');
+  const 끝점 = document.createElementNS(svg.namespaceURI, 'circle');
+  끝점.setAttribute('cx', x(값.length - 1)); 끝점.setAttribute('cy', y(값[값.length - 1] || 0));
+  끝점.setAttribute('r', 4); 끝점.setAttribute('fill', '#F1EDFF');
+
+  const 글 = (gx, gy, s, anchor) => {
+    const t = document.createElementNS(svg.namespaceURI, 'text');
+    t.setAttribute('x', gx); t.setAttribute('y', gy); t.setAttribute('fill', '#7A7A8C');
+    t.setAttribute('font-size', '11'); if (anchor) t.setAttribute('text-anchor', anchor);
+    t.textContent = s; return t;
+  };
+  svg.append(면, 선, 바닥, 끝점,
+    글(0, 11, (꾸밈.꼭대기 || (v => 수(v)))(큰)),
+    글(0, H - 6, 날(days[0] && days[0].date)),
+    글(W, H - 6, 날(days[days.length - 1] && days[days.length - 1].date), 'end'));
+  svg.setAttribute('aria-label', `${날(days[0] && days[0].date)} 부터 ${날(days[days.length - 1] && days[days.length - 1].date)} 까지, 가장 큰 값 ${(꾸밈.꼭대기 || (v => 수(v)))(큰)}`);
+  return svg;
+}
+
+/** 광고 단위별 막대 */
+function 막대들(목록, 값글) {
+  const w = 만들기('div', 'bars');
+  const 큰 = Math.max(...목록.map(x => x.amount), 0.000001);
+  for (const x of 목록) {
+    const r = 만들기('div', 'bar');
+    r.append(만들기('span', 'n', x.name), 만들기('span', 'v', 값글(x)));
+    const t = 만들기('div', 't'), i = 만들기('i');
+    i.style.width = Math.max(2, (x.amount / 큰) * 100) + '%';
+    t.append(i); r.append(t); w.append(r);
+  }
+  return w;
+}
+
+/** 못 읽은 갈래 — 0 이라서 빈 것과 다르게 보여 준다 */
+function 못읽음(이름, s) {
+  const p = 만들기('div', 'pan');
+  const h = 만들기('h2'); h.append(document.createTextNode(이름));
+  h.append(만들기('em', null, '읽지 못했어요'));
+  p.append(h, 만들기('p', 'warn', s && s.error ? s.error : '까닭이 적혀 있지 않아요'));
+  return p;
+}
+
+// GA4 는 나라를 영어로 준다. 없는 나라는 받은 그대로 보여 준다
+const 나라이름 = {
+  'South Korea': '한국', 'United States': '미국', Japan: '일본', Taiwan: '대만',
+  Canada: '캐나다', Australia: '호주', Singapore: '싱가포르', Germany: '독일',
+  'United Kingdom': '영국', France: '프랑스', Vietnam: '베트남', Thailand: '태국',
+  China: '중국', 'Hong Kong': '홍콩', India: '인도', Indonesia: '인도네시아',
+};
+// 동작 이름은 GA4 가 영어로 준다 — 오너가 읽을 말로 바꾼다
+const 동작이름 = {
+  first_open: '새로 깐 사람', session_start: '앱 켜기', screen_view: '화면 보기',
+  user_engagement: '쓰는 중', ad_impression: '광고 보임', ad_click: '광고 누름',
+  app_exception: '오류', app_remove: '지움', app_update: '새 판으로',
+  // 앱이 직접 보내는 것 (2026-10-31 개발 세션). 스토어 판부터 들어온다.
+  // 말은 **앱 화면에 적힌 글 그대로** 쓴다 — 개발 세션이 코드에서 읽어 확인해 줬다
+  video_record: '촬영', video_import: '갤러리에서 불러오기',
+  export_start: '영상 만들기 시작', export_done: '영상 만들기 끝',
+  export_fail: '영상 만들기 실패', export_cancel: '영상 만들기 그만',
+  backup_create: '백업 만들기', gym_add: '암장 직접 추가',
+  pro_reward_earned: '광고 보고 Pro 한 번', pro_purchase: 'Pro 삼',
+  backup_restore: '백업 되살리기', language_change: '언어 바꾸기',
+};
+// 화면 이름도 앱이 영어로 보낸다 (Telemetry.Scr). 모르는 이름은 받은 그대로 보여 준다
+const 화면이름 = {
+  welcome: '처음 인사', camera: '카메라', review: '촬영 확인', photo: '사진 보기',
+  library: '내 앨범', library_pick: '앨범에서 영상 선택', player: '영상 보기',
+  edit: '편집', ending_card: '엔딩 카드', cover: '커버 꾸미기', montage: '이어 붙이기',
+  // 자동 자르기는 2026-09-20 에 내렸다 — 지금 cutting 은 「완성」 뒤 영상을 굽는 로딩 창이다
+  cutting: '영상 만드는 중',
+  status: '상태창', calendar: '캘린더', day: '하루 요약', records: '기록',
+  gym_map: '암장', gym_detail: '암장 상세', settings: '설정',
+};
+
+/** 지금 — 최근 30분. 열어 둔 채로 바뀐다 */
+function 지금판() {
+  const L = 실시간;
+  const p = 만들기('div', 'pan now');
+  const h = 만들기('h2');
+  h.append(document.createTextNode('지금'));
+  const ping = 만들기('span', 'ping');
+  ping.append(만들기('i'), document.createTextNode(L ? '실시간' : '멈춤'));
+  h.append(ping);
+  if (L) h.append(만들기('em', null, '최근 ' + (L.windowMinutes || 30) + '분'));
+  p.append(h);
+
+  if (!L) {
+    p.append(만들기('p', 'warn', '실시간 자료가 아직 올라오지 않았어요. 1분마다 저절로 들어오니 잠시 기다려 주세요.'));
+    return p;
+  }
+
+  const head = 만들기('div', 'head');
+  const big = 만들기('div', 'big');
+  big.append(document.createTextNode(수(L.active)));
+  big.append(만들기('small', null, '명이 지금 쓰고 있어요'));
+  head.append(big);
+  p.append(head);
+
+  // 분 단위 막대 — 아무도 없던 분도 칸을 비워 두지 않는다(0 이 보여야 거짓말이 아니다)
+  const 분 = L.minutes || [];
+  if (분.length) {
+    const 큰 = Math.max(...분.map(m => m.users), 1);
+    const bars = 만들기('div', 'mins');
+    분.forEach((m, i) => {
+      const b = 만들기('i');
+      b.style.height = Math.round((m.users / 큰) * 100) + '%';
+      if (!m.users) b.className = 'zero';
+      else if (i === 분.length - 1) b.className = 'last';
+      b.title = m.ago + '분 전 · ' + m.users + '명';
+      bars.append(b);
+    });
+    p.append(bars);
+    const ax = 만들기('div', 'axis');
+    ax.append(만들기('span', null, (L.windowMinutes || 30) + '분 전'), 만들기('span', null, '지금'));
+    p.append(ax);
+  }
+
+  // 오늘 — 자정부터 지금까지
+  const T = L.today;
+  if (T) {
+    p.append(만들기('p', 'sub2', '오늘 (자정부터 지금까지)'));
+    p.append(타일들([
+      ['앱 킨 수', 수(T.opens)],
+      ['쓴 사람', 수(T.users)],
+      ['새 설치', 수(T.installs), 'hi'],
+      ['본 화면', 수(T.screens)],
+    ]));
+  }
+
+  const 칩 = (라벨, 목록, 바꾸기) => {
+    if (!목록 || !목록.length) return;
+    p.append(만들기('p', 'sub2', 라벨));
+    const w = 만들기('div', 'chips2');
+    목록.forEach(x => {
+      const s = 만들기('span');
+      s.append(document.createTextNode((바꾸기 ? (바꾸기[x.name] || x.name) : x.name) + ' '));
+      s.append(만들기('b', null, 수(x.n)));
+      w.append(s);
+    });
+    p.append(w);
+  };
+  칩('나라', L.countries, 나라이름);
+  칩('방금 일어난 동작', L.events, 동작이름);
+  // 앱이 화면 이름을 안 보내면 GA4 가 빈 이름으로 준다. 「이름 없는 화면 5」는 아무 쓸모가 없으므로
+  // 그런 줄은 빼고, 왜 비는지를 적는다
+  const 화면들 = (L.screens || []).filter(x => x.name && x.name !== '이름 없는 화면');
+  if (화면들.length) 칩('보고 있는 화면', 화면들, 화면이름);
+  else p.append(만들기('p', 'sub2',
+    '보고 있는 화면 — 아직 알 수 없어요. 앱이 화면 이름을 보내기 시작한 판이 스토어에 올라가야 보여요'));
+
+  return p;
+}
+
+function 대시보드() {
+  const D = $('dash'); D.textContent = '';
+  D.append(지금판());
+
+  if (통계상태 === '읽는중') { D.append(만들기('p', 'at', '불러오는 중이에요.')); return; }
+  if (통계상태 !== '됨') {
+    const h = 만들기('div', 'hint');
+    h.append(만들기('b', null, 통계상태 === '막힘' ? '이 계정은 대시보드를 볼 수 없어요'
+      : 통계상태 === '실패' ? '숫자를 불러오지 못했어요' : '아직 모은 숫자가 없어요'));
+    const p = 만들기('p');
+    if (통계상태 === '없음') {
+      p.append(document.createTextNode('PC 에서 '));
+      p.append(만들기('code', null, 'node stats/collect.js'));
+      p.append(document.createTextNode(' 를 한 번 돌리면 수익 · 사용자 · 설치가 여기에 올라와요. 하루 한 번 저절로 돌게 해 두면 그다음부터는 손댈 일이 없어요.'));
+    } else {
+      p.textContent = '오너 계정으로 로그인했는지, 보안 규칙에 stats 읽기가 들어갔는지 보세요.';
+    }
+    h.append(p); D.append(h); return;
+  }
+
+  const S = 통계.sources || {};
+  const 모은때 = 통계.at ? new Date(통계.at) : null;
+  D.append(만들기('p', 'at', 모은때
+    ? `${모은때.getMonth() + 1}월 ${모은때.getDate()}일 ${String(모은때.getHours()).padStart(2, '0')}:${String(모은때.getMinutes()).padStart(2, '0')} 에 모은 숫자예요. AdMob 은 네 시간쯤 늦게 반영돼요.`
+    : '모은 때가 적혀 있지 않아요.'));
+
+  // 수익
+  const r = 통계.revenue;
+  if (!r) D.append(못읽음('수익 (AdMob)', S.revenue));
+  else {
+    const p = 만들기('div', 'pan');
+    const h = 만들기('h2'); h.append(document.createTextNode('수익 (AdMob)'));
+    h.append(만들기('em', null, 까지(r.days)));
+    p.append(h, 타일들([
+      ['어제', 달러(r.yesterday), 'hi'],
+      ['오늘 (지금까지)', 달러(r.today)],
+      ['최근 7일', 달러(r.last7)],
+      ['이번 달', 달러(r.month)],
+      ['이번 달 원화', '약 ' + 수(Math.round((r.month || 0) * 원)) + '원'],
+    ]));
+    if (r.days && r.days.length) p.append(스파크(r.days, d => d.amount, { 꼭대기: v => 달러(v) }));
+    if (r.byUnit && r.byUnit.length) p.append(막대들(r.byUnit.map(u => ({ name: 이름고치기(u), amount: u.amount })), x => 달러(x.amount)));
+    D.append(p);
+  }
+
+  // 사용자
+  const u = 통계.users;
+  if (!u) D.append(못읽음('사용자 (Firebase Analytics)', S.users));
+  else {
+    const p = 만들기('div', 'pan');
+    const h = 만들기('h2'); h.append(document.createTextNode('사용자'));
+    h.append(만들기('em', null, '쓰고 있는 사람 · ' + 까지(u.days)));
+    p.append(h, 타일들([
+      ['오늘 (DAU)', 수(u.dau), 'hi'],
+      ['7일 (WAU)', 수(u.wau)],
+      ['28일 (MAU)', 수(u.mau)],
+      ['새 사용자 7일', 수(u.newUsers7)],
+      ['새 사용자 30일', 수(u.newUsers30)],
+    ]));
+    if (u.days && u.days.length) p.append(스파크(u.days, d => d.dau));
+    D.append(p);
+  }
+
+  // 설치
+  const i = 통계.installs;
+  if (!i) D.append(못읽음('설치 (Play)', S.installs));
+  else {
+    const 순증 = (i.installs7 || 0) - (i.uninstalls7 || 0);
+    const p = 만들기('div', 'pan');
+    const h = 만들기('h2'); h.append(document.createTextNode('설치 (Play)'));
+    h.append(만들기('em', null, '기기 기준 · ' + 까지(i.days)));
+    p.append(h, 타일들([
+      ['7일 설치', 수(i.installs7), 'hi'],
+      ['7일 삭제', 수(i.uninstalls7)],
+      ['7일 순증', (순증 >= 0 ? '+' : '') + 수(순증), 순증 >= 0 ? 'up' : 'down'],
+      ['30일 설치', 수(i.installs30)],
+      // Play 는 «누적 설치» 를 0 으로 비워 보낼 때가 많다. 지금 깔려 있는 기기 수가 더 쓸모 있다
+      ['지금 깔려 있음', i.active == null ? (i.total == null ? '아직 몰라요' : 수(i.total)) : 수(i.active)],
+    ]));
+    if (i.days && i.days.length) p.append(스파크(i.days, d => d.installs));
+    D.append(p);
+  }
+}
+
+/** 사람이 읽는 이름은 수집기가 stats/config.json 을 보고 이미 붙여 둔다. 여기서는 받아 쓰기만 한다 */
+function 이름고치기(u) {
+  return u.name || u.id || '이름 없는 광고 자리';
+}
+
+뷰();
 </script>
 </body></html>
