@@ -420,7 +420,7 @@ function 지금판() {
   // 오늘 — 자정부터 지금까지
   const T = L.today;
   if (T) {
-    p.append(만들기('p', 'sub2', '오늘 (자정부터 지금까지)'));
+    p.append(만들기('p', 'sub2', '오늘 (자정부터 지금까지 · 1분마다 새로 들어와요)'));
     p.append(타일들([
       ['앱 킨 수', 수(T.opens)],
       ['쓴 사람', 수(T.users)],
@@ -475,6 +475,9 @@ function 대시보드() {
 
   const S = 통계.sources || {};
   const 모은때 = 통계.at ? new Date(통계.at) : null;
+  const 잰시각 = 모은때
+    ? String(모은때.getHours()).padStart(2, '0') + ':' + String(모은때.getMinutes()).padStart(2, '0')
+    : null;
   D.append(만들기('p', 'at', 모은때
     ? `${모은때.getMonth() + 1}월 ${모은때.getDate()}일 ${String(모은때.getHours()).padStart(2, '0')}:${String(모은때.getMinutes()).padStart(2, '0')} 에 모은 숫자예요. AdMob 은 네 시간쯤 늦게 반영돼요.`
     : '모은 때가 적혀 있지 않아요.'));
@@ -488,7 +491,7 @@ function 대시보드() {
     h.append(만들기('em', null, 까지(r.days)));
     p.append(h, 타일들([
       ['어제', 달러(r.yesterday), 'hi'],
-      ['오늘 (지금까지)', 달러(r.today)],
+      [잰시각 ? '오늘 (' + 잰시각 + ' 까지)' : '오늘', 달러(r.today)],
       ['최근 7일', 달러(r.last7)],
       ['이번 달', 달러(r.month)],
       ['이번 달 원화', '약 ' + 수(Math.round((r.month || 0) * 원)) + '원'],
@@ -506,7 +509,7 @@ function 대시보드() {
     const h = 만들기('h2'); h.append(document.createTextNode('사용자'));
     h.append(만들기('em', null, '쓰고 있는 사람 · ' + 까지(u.days)));
     p.append(h, 타일들([
-      ['오늘 (DAU)', 수(u.dau), 'hi'],
+      [잰시각 ? '오늘 (' + 잰시각 + ' 까지)' : '오늘', 수(u.dau), 'hi'],
       ['7일 (WAU)', 수(u.wau)],
       ['28일 (MAU)', 수(u.mau)],
       ['새 사용자 7일', 수(u.newUsers7)],
