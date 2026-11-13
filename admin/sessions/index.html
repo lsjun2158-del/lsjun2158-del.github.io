@@ -112,7 +112,9 @@ svg.links{position:absolute;overflow:visible;pointer-events:none;left:0;top:0}
 .d-run{background:var(--mint)}.d-wait{background:var(--orange)}.d-idle{background:var(--dim)}
 .pb{flex:1;overflow:auto;padding:4px 18px 10px}
 .panel h4{margin:14px 0 6px;font:600 11px var(--mono);letter-spacing:.1em;color:var(--dim)}
-.cv p{margin:0 0 6px;font-size:13px;overflow-wrap:anywhere}
+.cv{max-height:46vh;overflow-y:auto;padding-right:4px}
+.cv p{margin:0 0 10px;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.cv .who small{font-weight:400;opacity:.7;margin-left:4px}
 .cv .me{color:var(--cyan)}
 .who{font:600 11px var(--mono);color:var(--dim);margin-right:6px}
 .note{background:rgba(255,179,108,.08);border:1px solid rgba(255,179,108,.3);border-radius:10px;padding:10px 12px;font-size:13px;margin:8px 0}
@@ -149,7 +151,48 @@ textarea:focus{outline:none;border-color:var(--cyan)}
 #gate b{display:block;font:700 15px var(--mono);letter-spacing:.14em}
 #gate button{margin-top:22px;width:100%;padding:11px 14px;border-radius:7px;background:var(--cyan);color:#041016;font-weight:700}
 #gate p{margin:14px 0 0;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
-@media (max-width:700px){.relay,.use{margin-left:0}.meter .bar{width:64px}.panel{top:auto;bottom:70px;height:62vh}}
+/* ── 폰(폭 700px 아래) — 2026-11-14 오너 «별자리로, 모바일 최적화» (시안 v2) ──
+   위 띠는 두 줄, 별자리는 세로로 길게, 별은 손가락 크기, 세션은 오른쪽 칸 대신 아래 카드(끌어올리면 화면 전체) */
+.grab{display:none}
+@media (max-width:700px){
+  .top{gap:6px 8px;padding:8px 12px}
+  nav.site{margin:-8px -12px 2px;padding:0 12px}
+  .relay,.use{margin-left:0}
+  .relay{order:1;padding:4px 9px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:11.5px}
+  .use{order:2;gap:6px}
+  .stat{order:3;flex:1 1 100%}
+  .meter{padding:4px 9px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:11.5px;gap:6px}
+  .meter .bar{width:34px;height:4px}
+  .meter b{font-size:12px}
+  .meter small{display:none}
+  .stat button{padding:5px 10px;font-size:12px}
+  .stat button b{font-size:13px}
+  .zoom{display:none}
+  .groups{left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));max-width:none}
+  .groups button{padding:6px 11px;font-size:12.5px}
+  /* 폰 배치는 화면 크기 그대로(별 사이 거리를 화면 픽셀로 잡음) — 별은 손가락 크기, 이름은 늘 보이게 */
+  .node{width:112px;gap:4px}
+  .orb{font-size:13px}
+  .lb{font-size:12px;line-height:1.25}
+  .sess .sm{display:none}
+  .ghub .orb{--sz:70px;font-size:11.5px;padding:4px}
+  .hub .orb{--sz:78px;font-size:14px}
+  .hub .sm{font:500 10.5px var(--sans)}
+  .radial{display:none}
+  .panel{left:0;right:0;bottom:0;top:auto;width:auto;max-width:none;height:min(56vh,480px);border-radius:20px 20px 0 0;border-width:1px 0 0;background:rgba(20,27,35,.98);box-shadow:0 -20px 40px rgba(0,0,0,.45);transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1),height .3s cubic-bezier(.2,.8,.2,1)}
+  .panel.open{transform:none}
+  .panel.full{height:calc(100vh - var(--topH,64px));height:calc(100dvh - var(--topH,64px))}
+  .grab{display:block;flex:none;height:24px;touch-action:none;cursor:grab;position:relative}
+  .grab::before{content:"";position:absolute;left:50%;top:9px;width:40px;height:4px;margin-left:-20px;border-radius:2px;background:var(--line2)}
+  .x{top:26px}
+  .ph{padding:0 16px 10px}
+  .pb{padding:4px 16px 10px}
+  .cv{max-height:30vh}
+  .panel.full .cv{max-height:56vh}
+  .cp{padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+  textarea{min-height:44px;font-size:16px}
+  .panel h4,.gp{font-family:var(--sans);letter-spacing:.02em}
+}
 </style>
 </head>
 <body>
@@ -168,6 +211,7 @@ textarea:focus{outline:none;border-color:var(--cyan)}
 <div class="zoom"><button id="zi" aria-label="확대">+</button><div class="lv" id="lv">100%</div><button id="zo" aria-label="축소">−</button><button id="zf" aria-label="전체 보기">⤢</button></div>
 
 <aside class="panel" id="panel">
+  <div class="grab" id="grab" aria-hidden="true"></div>
   <button class="x" id="px" aria-label="닫기">✕</button>
   <div class="ph"><div class="gp" id="pg"></div><h2 id="pt"></h2><div class="st" id="ps"></div></div>
   <div class="pb" id="pb"></div>
@@ -209,6 +253,7 @@ auth.onAuthStateChanged(u => {
 });
 
 /* ───────── 자료 ───────── */
+const MOB = () => matchMedia('(max-width:700px)').matches;   // 폰 화면 (CSS 의 700px 와 같은 선)
 const PALETTE = ['#8A6DFF', '#00E5FF', '#00FFC6', '#FF6FB0', '#FFB36C', '#7CC4FF', '#C9F26B'];
 let G = [], S = [], CMDS = [], RELAY = null, HIDDEN = null;
 const gOf = id => G.find(g => g.id === id) || G[G.length - 1];
@@ -226,7 +271,7 @@ function onFeed(d) {
   if ((d.sessions || []).some(s => !s.group || !groups.some(g => g.id === s.group))) groups.push({ id: '_', name: '묶음 없음' });
   G = groups.map((g, i) => ({ ...g, c: PALETTE[i % PALETTE.length] }));
   S = (d.sessions || []).map(s => ({ ...s, g: groups.some(g => g.id === s.group) ? s.group : '_' }));
-  const sig = G.map(g => g.id).join() + '|' + S.map(s => s.id + s.g + (s.parent || '')).join();
+  const sig = (MOB() ? 'm|' : '') + G.map(g => g.id).join() + '|' + S.map(s => s.id + s.g + (s.parent || '')).join();
   if (sig !== layoutSig) { layout(); layoutSig = sig; draw(); if (!fitted) { fitted = true; requestAnimationFrame(() => fit(allBounds(), false)); } }
   else draw();
   renderStat(); renderGroups(); renderRelay(); refreshPanel();
@@ -235,11 +280,18 @@ function onFeed(d) {
 /* ───────── 배치: 오너 → 묶음 → 세션 → 갈래 ───────── */
 let pos = {}, layoutSig = '', fitted = false;
 function layout() {
-  pos = {}; const R = Math.max(560, 120 * G.length), RS = 240, RC = 180;
-  G.forEach((g, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / G.length; pos['g:' + g.id] = { x: R * Math.cos(a), y: R * Math.sin(a), a }; });
+  // 폰은 화면 픽셀 크기로 짠다 — PC 처럼 크게 짜서 줄이면 별은 작아지고 손가락으로 못 누른다
+  // 묶음은 세로로 긴 타원에, 세션은 별 사이가 화면에서 늘 GAP 픽셀 넘게 벌어지도록 부채꼴 반지름을 늘린다
+  const m = MOB(), GAP = 88;
+  pos = {}; const R = m ? Math.max(190, 40 * G.length) : Math.max(560, 120 * G.length), RC = m ? 80 : 180;
+  G.forEach((g, i) => {
+    const t = -Math.PI / 2 + i * 2 * Math.PI / G.length, x = R * Math.cos(t) * (m ? .55 : 1), y = R * Math.sin(t);
+    pos['g:' + g.id] = { x, y, a: Math.atan2(y, x) };
+  });
   G.forEach(g => {
     const hub = pos['g:' + g.id], tops = S.filter(s => s.g === g.id && !(s.parent && S.some(p => p.id === s.parent && p.g === g.id))).sort((a, b) => a.order - b.order), n = tops.length;
-    const spread = Math.min(2.6, .5 * (n - 1));
+    const spread = m ? Math.min(2.4, .9 * (n - 1)) : Math.min(2.6, .5 * (n - 1));
+    const RS = m ? Math.max(104, n > 1 ? (n - 1) * GAP / spread : 0) : 240;
     tops.forEach((s, j) => {
       const a = hub.a + (n > 1 ? -spread / 2 + spread * j / (n - 1) : 0);
       pos[s.id] = { x: hub.x + RS * Math.cos(a), y: hub.y + RS * Math.sin(a), a };
@@ -248,7 +300,7 @@ function layout() {
   });
   function kids(p, a, depth) {
     S.filter(c => c.parent === p.id && c.g === p.g).forEach((c, k, arr) => {
-      const ca = a + (k - (arr.length - 1) / 2) * .45;
+      const ca = a + (k - (arr.length - 1) / 2) * (m ? .9 : .45);
       pos[c.id] = { x: pos[p.id].x + RC * Math.cos(ca), y: pos[p.id].y + RC * Math.sin(ca), a: ca };
       if (depth < 3) kids(c, ca, depth + 1);
     });
@@ -272,12 +324,12 @@ function draw() {
     const p = pos[s.id], parent = s.parent && pos[s.parent] && S.find(x => x.id === s.parent)?.g === s.g ? pos[s.parent] : pos['g:' + s.g], g = gOf(s.g);
     const mx = (parent.x + p.x) / 2, my = (parent.y + p.y) / 2, cx = mx - (p.y - parent.y) * .12, cy = my + (p.x - parent.x) * .12;
     L += `<path data-grp="${s.g}" data-ls="${s.id}" class="ln ${s.st === 'run' ? 'run' : ''}" d="M${parent.x} ${parent.y} Q${cx} ${cy} ${p.x} ${p.y}" stroke="${s.st === 'wait' ? '#FFB36C' : g.c}" stroke-opacity="${s.st === 'idle' ? .28 : .85}" stroke-width="${s.st === 'idle' ? 1.2 : 2.2}"/>`;
-    const oc = openCmds(s.id).length, sz = s.st === 'run' ? 54 : s.st === 'wait' ? 48 : 38;
+    const oc = openCmds(s.id).length, sz = MOB() ? (s.st === 'idle' ? 42 : 48) : s.st === 'run' ? 54 : s.st === 'wait' ? 48 : 38;
     const ic = s.st === 'wait' ? '?' : oc ? '✉' : s.st === 'run' ? '▶' : '';
     N += `<button class="node sess st-${s.st}" data-s="${s.id}" data-grp="${s.g}" style="left:${p.x}px;top:${p.y}px;--c:${g.c};--sz:${sz}px">
       <span class="orb">${ic}</span><span class="lb">${esc(s.title)}</span><span class="sm">${stTxt[s.st]} · ${ago(s.last)}</span></button>`;
   });
-  N += `<button class="node hub" data-o="1" style="left:0;top:0"><span class="orb">오너</span><span class="sm">누르면 비서창에게 맡기기</span></button>`;
+  N += `<button class="node hub" data-o="1" style="left:0;top:0"><span class="orb">오너</span><span class="sm">누르면 페이(PA)에게 맡기기</span></button>`;
   const rd = $('radial'), keep = rd && !rd.hidden ? rd.outerHTML : '<div class="radial" id="radial" hidden></div>';
   world.innerHTML = `<div class="sky"></div><svg class="links" width="1" height="1">${L}</svg>${N}${keep}`;
   applyDim(); markSel();
@@ -326,7 +378,7 @@ function renderUsage() {
 
 /* ───────── 끌기 · 확대 ───────── */
 let T = { x: 0, y: 0, k: 1 }; const minK = .12, maxK = 2.2;
-function apply() { world.style.transform = `translate(${T.x}px,${T.y}px) scale(${T.k})`; $('lv').textContent = Math.round(T.k * 100) + '%'; vp.dataset.far = T.k < .5 ? '1' : '0'; world.style.setProperty('--inv', (1 / T.k).toFixed(3)); }
+function apply() { world.style.transform = `translate(${T.x}px,${T.y}px) scale(${T.k})`; $('lv').textContent = Math.round(T.k * 100) + '%'; vp.dataset.far = T.k < (MOB() ? .3 : .5) ? '1' : '0'; world.style.setProperty('--inv', (1 / T.k).toFixed(3)); }
 function zoomAt(px, py, k2) { k2 = Math.max(minK, Math.min(maxK, k2)); T.x = px - (px - T.x) * k2 / T.k; T.y = py - (py - T.y) * k2 / T.k; T.k = k2; apply(); }
 vp.addEventListener('wheel', e => { e.preventDefault(); world.classList.remove('fly'); zoomAt(e.clientX, e.clientY, T.k * Math.exp(-e.deltaY * .0015)); }, { passive: false });
 const ptrs = new Map(); let pinch = null, moved = false;
@@ -346,8 +398,8 @@ $('zi').onclick = () => { world.classList.add('fly'); zoomAt(innerWidth / 2, inn
 $('zo').onclick = () => { world.classList.add('fly'); zoomAt(innerWidth / 2, innerHeight / 2, T.k / 1.35); };
 $('zf').onclick = () => focusGroup(null);
 function boundsOf(keys, pad) { const ps = keys.map(k => pos[k] || { x: 0, y: 0 }); const x = Math.min(0, ...ps.map(p => p.x)) - pad, y = Math.min(0, ...ps.map(p => p.y)) - pad; return { x, y, w: Math.max(0, ...ps.map(p => p.x)) + pad - x, h: Math.max(0, ...ps.map(p => p.y)) + pad + 40 - y }; }
-const allBounds = () => boundsOf(Object.keys(pos), 110);
-const groupBounds = id => { const ks = ['g:' + id, ...S.filter(s => s.g === id).map(s => s.id)]; const ps = ks.map(k => pos[k]); const x = Math.min(...ps.map(p => p.x)) - 120, y = Math.min(...ps.map(p => p.y)) - 120; return { x, y, w: Math.max(...ps.map(p => p.x)) + 120 - x, h: Math.max(...ps.map(p => p.y)) + 160 - y }; };
+const allBounds = () => boundsOf(Object.keys(pos), MOB() ? 40 : 110);
+const groupBounds = id => { const ks = ['g:' + id, ...S.filter(s => s.g === id).map(s => s.id)]; const ps = ks.map(k => pos[k]), a = MOB() ? 56 : 120, b = MOB() ? 76 : 160; const x = Math.min(...ps.map(p => p.x)) - a, y = Math.min(...ps.map(p => p.y)) - a; return { x, y, w: Math.max(...ps.map(p => p.x)) + a - x, h: Math.max(...ps.map(p => p.y)) + b - y }; };
 function fit(r, anim) {
   const top = $('top').offsetHeight + 16, bottom = $('groups').offsetHeight + 34, side = 24, rp = $('panel').classList.contains('open') && innerWidth > 700 ? 410 : 0;
   const vw = innerWidth - side * 2 - rp, vh = innerHeight - top - bottom;
@@ -375,7 +427,7 @@ function cmdHTML(c, showTo) {
   const to = showTo ? `<b>${esc((S.find(s => s.id === c.to.id) || {}).title || '세션')}</b> · ` : '';
   const steps = c.state === 'failed' || c.state === 'cancelled'
     ? `<span class="bad">${c.state === 'failed' ? '실패' : '취소함'}</span>`
-    : STEP.map((x, i) => `<span class="${i <= n ? 'done' : ''}">${i === 1 && c.state === 'queued' ? '줄 섬 — 세션이 일하는 중' : x}</span>`).join('');
+    : STEP.map((x, i) => `<span class="${i <= n ? 'done' : ''}">${i === 1 && c.state === 'queued' ? '줄 섬 — ' + esc(c.why || '세션이 일하는 중') : x}</span>`).join('');
   const use = c.usage ? ` · 토큰 ${Math.round((c.usage.in + c.usage.out) / 1000)}k` : '';
   return `<li><div class="meta">${to}${when}${use}${['sent', 'received', 'queued'].includes(c.state) ? ` · <button data-cancel="${c.id}">취소</button>` : ''}</div>
     <div class="tx">${esc(c.text)}</div><div class="steps">${steps}</div>
@@ -386,18 +438,57 @@ function openSession(id) {
   const par = s.parent && S.find(x => x.id === s.parent);
   $('pg').innerHTML = `<i class="dot" style="background:${g.c};border-radius:2px"></i>${esc(g.name.toUpperCase())}${par ? ' · 갈래 ← ' + esc(par.title) : ''}`;
   $('pt').textContent = s.title;
-  $('ps').innerHTML = `<i class="dot d-${s.st}"></i>${stTxt[s.st]} · ${ago(s.last)} · ${esc(s.model || '')} · ${esc(s.mode || '')} · <a href="${appLink(id)}">앱에서 열기</a>`;
+  $('ps').innerHTML = `<i class="dot d-${s.st}"></i>${stTxt[s.st]}${s.live ? ' · 앱에서 열려 있음' : ''} · ${ago(s.last)} · ${esc(s.model || '')} · ${esc(s.mode || '')} · <a href="${appLink(id)}">앱에서 열기</a>`;
   const L = cmdsOf(id);
+  const oldTv = TALK.id === id ? $('talk') : null, keepTop = oldTv ? oldTv.scrollTop : null;
+  watchTalk(id);
   $('pb').innerHTML = (s.st === 'wait' ? `<div class="note">이 세션은 앱에서 승인이나 답을 기다리고 있습니다. 여기서 보내면 그 일이 끝난 뒤에 들어갑니다. 바로 답하려면 <a href="${appLink(id)}">앱에서 열기</a>.</div>` : '')
-    + `<h4>최근 대화</h4><div class="cv">${s.me ? `<p class="me"><span class="who">나</span>${esc(s.me)}</p>` : ''}${s.ai ? `<p><span class="who">AI</span>${esc(s.ai)}</p>` : ''}${!s.me && !s.ai ? '<p style="color:var(--dim)">읽을 대화 없음</p>' : ''}</div>`
+    + (s.live ? `<div class="note">이 세션은 지금 앱에서 열려 있습니다. 여기서 보내면 대화가 두 갈래로 갈리지 않도록 <b>앱에서 닫힐 때까지 기다렸다가</b> 넣습니다. 바로 시키려면 <a href="${appLink(id)}">앱에서 열어</a> 직접 말하세요.</div>` : '')
+    + `<h4>대화 — 앱 · 홈페이지 한 줄로</h4><div class="cv" id="talk">${talkHTML(s)}</div>`
     + `<h4>내가 보낸 지시 ${L.length}</h4><ul class="lg">${L.length ? L.map(c => cmdHTML(c)).join('') : '<li style="color:var(--dim)">아직 보낸 지시 없음</li>'}</ul>`;
+  const tv = $('talk'); if (tv) tv.scrollTop = keepTop != null ? keepTop : tv.scrollHeight;
+  if (keepTop == null) talkToEnd();
   $('pto').innerHTML = `받는 곳: <b>${esc(s.title)}</b>${s.canSend ? '' : ' — 대화 파일이 없어 보낼 수 없음'}`;
   $('msg').placeholder = '이 세션에 시킬 일 — 오너가 앱에서 치는 것과 같게 들어갑니다';
   $('send').disabled = !s.canSend; $('cost').textContent = '';
   show();
 }
+/* 대화 한 줄기 — 세션을 열어 둔 동안 talk_req/<세션> 에 1분마다 «보고 있음» 을 적으면
+ * PC 중계가 대화 파일의 최근 40마디를 feed/talk_<세션> 에 올린다 (relay.js 1-3) */
+let TALK = { id: null, d: null, off: null, ping: null };
+let talkScrolled = false;
+function watchTalk(id) {
+  if (TALK.id === id) return;
+  stopTalk(); TALK.id = id; talkScrolled = false;
+  const ping = () => fs.doc('talk_req/' + id).set({ at: firebase.firestore.FieldValue.serverTimestamp() }).catch(() => {});
+  ping(); TALK.ping = setInterval(ping, 60 * 1000);
+  TALK.off = fs.doc('feed/talk_' + id).onSnapshot(s => {
+    if (TALK.id !== id) return;
+    TALK.d = s.exists ? s.data() : null;
+    const tv = $('talk'); if (!tv) return;
+    const atEnd = tv.scrollHeight - tv.scrollTop - tv.clientHeight < 40;
+    tv.innerHTML = talkHTML(S.find(x => x.id === id) || {});
+    if (!talkScrolled) talkToEnd();
+    if (atEnd || !talkScrolled) { tv.scrollTop = tv.scrollHeight; talkScrolled = true; }
+  }, () => {});
+}
+// 폰의 아래 카드는 높이가 낮아 대화 칸이 카드 아래로 밀려난다 — 대화 칸이 보이게 카드를 내린다
+function talkToEnd() {
+  const tv = $('talk'), pb = $('pb'); if (!MOB() || !tv) return;
+  pb.scrollTop = Math.max(0, tv.offsetTop + tv.offsetHeight - pb.clientHeight + 8);
+}
+function stopTalk() { if (TALK.off) TALK.off(); if (TALK.ping) clearInterval(TALK.ping); TALK = { id: null, d: null, off: null, ping: null }; }
+function talkHTML(s) {
+  const d = TALK.id === s.id ? TALK.d : null;
+  if (!d) return (s.me ? `<p class="me"><span class="who">나</span>${esc(s.me)}</p>` : '') + (s.ai ? `<p><span class="who">AI</span>${esc(s.ai)}</p>` : '')
+    + `<p style="color:var(--dim)">${s.me || s.ai ? '전체 대화를 PC 에서 불러오는 중…' : '읽을 대화 없음'}</p>`;
+  if (!d.turns || !d.turns.length) return '<p style="color:var(--dim)">읽을 대화 없음</p>';
+  const tm = ts => ts ? new Date(ts).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+  return (d.more ? '<p style="color:var(--dim);font-size:12px">더 앞의 대화는 앱에서</p>' : '')
+    + d.turns.map(t => `<p class="${t.who === 'me' ? 'me' : ''}"><span class="who">${t.who === 'me' ? (t.via === 'web' ? '나 · 홈페이지' : '나 · 앱') : 'AI'} <small>${tm(t.ts)}</small></span>${esc(t.t).replace(/\n/g, '<br>')}</p>`).join('');
+}
 function openGroup(id, keepView) {
-  const g = gOf(id), list = S.filter(s => s.g === id); cur = { k: 'g', id };
+  const g = gOf(id), list = S.filter(s => s.g === id); cur = { k: 'g', id }; stopTalk();
   $('pg').innerHTML = `<i class="dot" style="background:${g.c};border-radius:2px"></i>묶음`; $('pt').textContent = g.name;
   $('ps').textContent = `세션 ${list.length}개 · 작업 중 ${list.filter(s => s.st === 'run').length} · 내 답 기다림 ${list.filter(s => s.st === 'wait').length}`;
   const L = CMDS.filter(c => list.some(s => s.id === c.to?.id)).slice(0, 20);
@@ -409,23 +500,36 @@ function openGroup(id, keepView) {
   $('send').disabled = !n; $('cost').textContent = n > 1 ? `사용량 ×${n}` : '';
   show(); if (!keepView) focusGroup(id);
 }
-function secretary() { return S.find(s => s.title === '비서창'); }
+// 비서 세션 — 2026-11-13 오너가 이름을 PA(부를 때 «페이»)로 정함, 옛 이름 비서창
+function secretary() { return S.find(s => s.title === 'PA') || S.find(s => s.title === '비서창'); }
 function openOwner() {
-  cur = { k: 'o' }; const sec = secretary();
-  $('pg').textContent = '오너'; $('pt').textContent = '비서창에게 맡기기';
-  $('ps').textContent = '누구에게 갈지 비서창이 정해서 나눕니다';
+  cur = { k: 'o' }; stopTalk(); const sec = secretary();
+  $('pg').textContent = '오너'; $('pt').textContent = '페이(PA)에게 맡기기';
+  $('ps').textContent = '누구에게 갈지 페이가 정해서 나눕니다';
   const waits = S.filter(s => s.st === 'wait');
   $('pb').innerHTML = `<h4>앱에서 내 답을 기다리는 세션 ${waits.length}</h4><div class="mem">${waits.map(s => `<button data-open="${s.id}"><i class="dot d-wait"></i>${esc(s.title)}<small>${ago(s.last)}</small></button>`).join('') || '<span style="color:var(--dim);font-size:13px">없음</span>'}</div>`
     + `<h4>최근 지시 전체</h4><ul class="lg">${CMDS.slice(0, 25).map(c => cmdHTML(c, true)).join('') || '<li style="color:var(--dim)">없음</li>'}</ul>`
     + (HIDDEN ? `<p style="font-size:12px;color:var(--dim)">숨긴 세션: 보관 ${HIDDEN.archived} · 예약 작업이 만든 것 ${HIDDEN.scheduled}</p>` : '');
-  $('pto').innerHTML = sec ? '받는 곳: <b>비서창</b> → 알맞은 세션으로' : '비서창 세션을 찾지 못했습니다';
+  $('pto').innerHTML = sec ? '받는 곳: <b>페이(PA)</b> → 알맞은 세션으로' : 'PA 세션을 찾지 못했습니다';
   $('msg').placeholder = '예: 릴스 더빙은 A 로 하고, 리듬 블레이드는 영상 보고 다시 말할게';
   $('send').disabled = !sec; $('cost').textContent = '';
   show();
 }
 function show() { $('panel').classList.add('open'); markSel(); closeRadial(); }
 function refreshPanel() { if (!cur || !$('panel').classList.contains('open')) return; const keep = $('msg').value; cur.k === 's' ? openSession(cur.id) : cur.k === 'g' ? openGroup(cur.id, true) : openOwner(); $('msg').value = keep; }
-$('px').onclick = () => { $('panel').classList.remove('open'); cur = null; markSel(); };
+$('px').onclick = () => { $('panel').classList.remove('open', 'full'); cur = null; stopTalk(); markSel(); };
+// 폰의 아래 카드 — 손잡이를 누르거나 위로 끌면 화면 전체(대화창), 아래로 끌면 반 → 닫기
+(() => {
+  let y0 = null;
+  $('grab').addEventListener('pointerdown', e => { y0 = e.clientY; $('grab').setPointerCapture(e.pointerId); });
+  $('grab').addEventListener('pointerup', e => {
+    if (y0 == null) return; const dy = e.clientY - y0, p = $('panel'); y0 = null;
+    if (Math.abs(dy) < 8) { p.classList.toggle('full'); return; }
+    if (dy < -30) p.classList.add('full');
+    else if (dy > 30) { if (p.classList.contains('full')) p.classList.remove('full'); else $('px').onclick(); }
+    setTimeout(talkToEnd, 320);
+  });
+})();
 
 $('send').onclick = async () => {
   const text = $('msg').value.trim(); if (!text || !cur) { $('msg').focus(); return; }
@@ -451,13 +555,20 @@ function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add(
 world.addEventListener('click', e => {
   if (moved) return;
   const ra = e.target.closest('[data-ra]'); if (ra) { closeRadial(); openSession(ra.dataset.rid); if (ra.textContent === '지시하기') $('msg').focus(); return; }
-  const s = e.target.closest('[data-s]'); if (s) { cur = { k: 's', id: s.dataset.s }; markSel(); openRadial(s.dataset.s); return; }
+  // 폰은 둥근 메뉴 대신 바로 아래 카드 — 손가락으로 작은 메뉴를 다시 누르지 않게
+  const s = e.target.closest('[data-s]'); if (s) { if (MOB()) { openSession(s.dataset.s); return; } cur = { k: 's', id: s.dataset.s }; markSel(); openRadial(s.dataset.s); return; }
   const g = e.target.closest('[data-g]'); if (g) { openGroup(g.dataset.g); return; }
   if (e.target.closest('[data-o]')) openOwner();
 });
 const setTopH = () => document.documentElement.style.setProperty('--topH', $('top').offsetHeight + 'px');
 setTopH(); new ResizeObserver(setTopH).observe($('top'));
-addEventListener('resize', () => { if (Object.keys(pos).length) fit(focusG ? groupBounds(focusG) : allBounds(), false); });
+let wasMob = MOB();
+addEventListener('resize', () => {
+  if (!Object.keys(pos).length) return;
+  // 폰 ↔ PC 폭을 넘나들면 배치(세로로 길게 / 둥글게)를 다시 한다
+  if (MOB() !== wasMob) { wasMob = MOB(); layout(); layoutSig = ''; draw(); }
+  fit(focusG ? groupBounds(focusG) : allBounds(), false);
+});
 </script>
 </body>
 </html>
