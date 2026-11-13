@@ -71,8 +71,24 @@
       msg("로그인하지 못했습니다. 다시 눌러 주세요.", true);
     });
   }
+  /**
+   * HQ 로그인은 있는데 Solo Climbing(sc) 출입증만 없을 때 — 클릭 없이 Google 을 한 번 다녀와 받아 온다 (11-13 오너
+   * «한번 로그인하면 안뜨게»). Google 확인증은 로그인하는 순간에만 나오므로 이것 말고 길이 없다.
+   * login_hint 로 오너 계정을 미리 알려 계정 고르는 창이 뜨지 않게 한다. 맨 위 창일 때만(iframe 안에서는 안 함),
+   * 10분에 한 번만(실패해도 되풀이하지 않음). 돌아오면 getRedirectResult → linkSc 가 이어 붙인다.
+   */
+  function autoLinkSc(email) {
+    if (window.top !== window) return false;
+    var KEY = "wmw-sc-auto";
+    try { var t = Number(sessionStorage.getItem(KEY) || 0); if (Date.now() - t < 10 * 60 * 1000) return false; sessionStorage.setItem(KEY, String(Date.now())); } catch (e) { return false; }
+    var p = new firebase.auth.GoogleAuthProvider();
+    if (email) p.setCustomParameters({ login_hint: email });
+    mountGate(); msg("Solo Climbing 출입증을 받아 오는 중… (처음 한 번)");
+    auth.signInWithRedirect(p);
+    return true;
+  }
   function signOutAll() {
-    try { localStorage.removeItem(LOCAL_KEY); } catch (e) {}
+    try { localStorage.removeItem(LOCAL_KEY); sessionStorage.removeItem("wmw-sc-auto"); } catch (e) {}
     return Promise.all([auth.signOut(), scAuth.signOut()]).catch(function () {});
   }
 
@@ -166,6 +182,8 @@
       // 규칙이 막으면 오너가 아니다 — 페이지 쪽에서 이메일을 비교하지 않는다(규칙이 정본)
       fs.doc("feed/meta").get().then(function () {
         return Promise.all([scReady, linking]).then(function () {
+          // sc 출입증이 없으면 클릭 없이 받아 온다(처음 한 번). 안 되면 아래 안내로 물러난다
+          if (!scAuth.currentUser && autoLinkSc(user.email)) return;
           if (NEXT) {
             // 다른 관리 화면에서 넘어왔다 — Solo Climbing 은 sc 로그인이 있어야 열린다
             if (/^\/admin\/soloclimbing/.test(NEXT) && !scAuth.currentUser) { askLogin("Solo Climbing 까지 함께 열려면 한 번 더 로그인해 주세요."); return; }
