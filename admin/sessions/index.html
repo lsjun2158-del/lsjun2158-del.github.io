@@ -178,6 +178,7 @@ textarea:focus{outline:none;border-color:var(--cyan)}
   .ghub .orb{--sz:70px;font-size:11.5px;padding:4px}
   .hub .orb{--sz:78px;font-size:14px}
   .hub .sm{font:500 10.5px var(--sans)}
+  .node.hub{width:190px}
   .radial{display:none}
   .panel{left:0;right:0;bottom:0;top:auto;width:auto;max-width:none;height:min(56vh,480px);border-radius:20px 20px 0 0;border-width:1px 0 0;background:rgba(20,27,35,.98);box-shadow:0 -20px 40px rgba(0,0,0,.45);transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1),height .3s cubic-bezier(.2,.8,.2,1)}
   .panel.open{transform:none}
@@ -280,28 +281,44 @@ function onFeed(d) {
 /* ───────── 배치: 오너 → 묶음 → 세션 → 갈래 ───────── */
 let pos = {}, layoutSig = '', fitted = false;
 function layout() {
-  // 폰은 화면 픽셀 크기로 짠다 — PC 처럼 크게 짜서 줄이면 별은 작아지고 손가락으로 못 누른다
-  // 묶음은 세로로 긴 타원에, 세션은 별 사이가 화면에서 늘 GAP 픽셀 넘게 벌어지도록 부채꼴 반지름을 늘린다
-  const m = MOB(), GAP = 88;
-  pos = {}; const R = m ? Math.max(190, 40 * G.length) : Math.max(560, 120 * G.length), RC = m ? 80 : 180;
-  G.forEach((g, i) => {
-    const t = -Math.PI / 2 + i * 2 * Math.PI / G.length, x = R * Math.cos(t) * (m ? .55 : 1), y = R * Math.sin(t);
-    pos['g:' + g.id] = { x, y, a: Math.atan2(y, x) };
-  });
+  pos = {};
+  const topsOf = g => S.filter(s => s.g === g.id && !(s.parent && S.some(p => p.id === s.parent && p.g === g.id))).sort((a, b) => a.order - b.order);
+  if (MOB()) { layoutPhone(); return; }
+  const R = Math.max(560, 120 * G.length), RS = 240, RC = 180;
+  G.forEach((g, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / G.length; pos['g:' + g.id] = { x: R * Math.cos(a), y: R * Math.sin(a), a }; });
   G.forEach(g => {
-    const hub = pos['g:' + g.id], tops = S.filter(s => s.g === g.id && !(s.parent && S.some(p => p.id === s.parent && p.g === g.id))).sort((a, b) => a.order - b.order), n = tops.length;
-    const spread = m ? Math.min(2.4, .9 * (n - 1)) : Math.min(2.6, .5 * (n - 1));
-    const RS = m ? Math.max(104, n > 1 ? (n - 1) * GAP / spread : 0) : 240;
+    const hub = pos['g:' + g.id], tops = topsOf(g), n = tops.length;
+    const spread = Math.min(2.6, .5 * (n - 1));
     tops.forEach((s, j) => {
       const a = hub.a + (n > 1 ? -spread / 2 + spread * j / (n - 1) : 0);
       pos[s.id] = { x: hub.x + RS * Math.cos(a), y: hub.y + RS * Math.sin(a), a };
       kids(s, a, 1);
     });
   });
+  /* 폰(2026-11-14 오너 «겹침 발생») — 둥글게 놓으면 묶음끼리 부채꼴이 겹친다. 오너를 맨 위에 두고
+   * 묶음을 세로 줄기에 차례로 매단다. 세션은 묶음 오른쪽에 세로 송이로(가운데가 불룩한 활 모양),
+   * 위아래 간격 GAPY 는 별 + 세 줄 이름이 들어가는 높이. 묶음마다 자기 띠를 가져 서로 겹치지 않는다.
+   * 갈래는 부모 바로 뒤에 놓아 부모와 짧은 선으로 이어진다. 화면을 넘는 아래쪽은 끌어서 본다 */
+  function layoutPhone() {
+    const GAPY = 100, X0 = 118, BULGE = 56;
+    let y = 130;
+    G.forEach(g => {
+      const items = [], add = s => { items.push(s); S.filter(c => c.parent === s.id && c.g === g.id).forEach(add); };
+      topsOf(g).forEach(add);
+      S.filter(s => s.g === g.id && !items.includes(s)).forEach(s => items.push(s));
+      const n = items.length, half = Math.max((n - 1) * GAPY / 2, 40), cy = y + half + 30;
+      pos['g:' + g.id] = { x: 0, y: cy, a: 0 };
+      items.forEach((s, j) => {
+        const t = n > 1 ? j / (n - 1) * 2 - 1 : 0;
+        pos[s.id] = { x: X0 + BULGE * (1 - t * t), y: cy + (n > 1 ? t * half : 0), a: 0 };
+      });
+      y = cy + half + 90;
+    });
+  }
   function kids(p, a, depth) {
     S.filter(c => c.parent === p.id && c.g === p.g).forEach((c, k, arr) => {
-      const ca = a + (k - (arr.length - 1) / 2) * (m ? .9 : .45);
-      pos[c.id] = { x: pos[p.id].x + RC * Math.cos(ca), y: pos[p.id].y + RC * Math.sin(ca), a: ca };
+      const ca = a + (k - (arr.length - 1) / 2) * .45;
+      pos[c.id] = { x: pos[p.id].x + RC * Math.cos(ca), y: pos[p.id].y + RC * Math.sin(ca), a: ca };  // PC 만
       if (depth < 3) kids(c, ca, depth + 1);
     });
   }
@@ -398,13 +415,15 @@ $('zi').onclick = () => { world.classList.add('fly'); zoomAt(innerWidth / 2, inn
 $('zo').onclick = () => { world.classList.add('fly'); zoomAt(innerWidth / 2, innerHeight / 2, T.k / 1.35); };
 $('zf').onclick = () => focusGroup(null);
 function boundsOf(keys, pad) { const ps = keys.map(k => pos[k] || { x: 0, y: 0 }); const x = Math.min(0, ...ps.map(p => p.x)) - pad, y = Math.min(0, ...ps.map(p => p.y)) - pad; return { x, y, w: Math.max(0, ...ps.map(p => p.x)) + pad - x, h: Math.max(0, ...ps.map(p => p.y)) + pad + 40 - y }; }
-const allBounds = () => boundsOf(Object.keys(pos), MOB() ? 40 : 110);
+const allBounds = () => ({ ...boundsOf(Object.keys(pos), MOB() ? 40 : 110), all: true });
 const groupBounds = id => { const ks = ['g:' + id, ...S.filter(s => s.g === id).map(s => s.id)]; const ps = ks.map(k => pos[k]), a = MOB() ? 56 : 120, b = MOB() ? 76 : 160; const x = Math.min(...ps.map(p => p.x)) - a, y = Math.min(...ps.map(p => p.y)) - a; return { x, y, w: Math.max(...ps.map(p => p.x)) + a - x, h: Math.max(...ps.map(p => p.y)) + b - y }; };
 function fit(r, anim) {
   const top = $('top').offsetHeight + 16, bottom = $('groups').offsetHeight + 34, side = 24, rp = $('panel').classList.contains('open') && innerWidth > 700 ? 410 : 0;
   const vw = innerWidth - side * 2 - rp, vh = innerHeight - top - bottom;
   T.k = Math.max(minK, Math.min(1.3, Math.min(vw / r.w, vh / r.h)));
-  T.x = side + (vw - r.w * T.k) / 2 - r.x * T.k; T.y = top + (vh - r.h * T.k) / 2 - r.y * T.k;
+  // 폰의 전체 보기는 세로로 긴 줄기 — 폭에 맞추고 맨 위(오너)부터 보이게 둔다, 아래는 끌어서 본다
+  if (MOB() && r.all) T.k = Math.max(minK, Math.min(1.1, vw / r.w));
+  T.x = side + (vw - r.w * T.k) / 2 - r.x * T.k; T.y = MOB() && r.all && r.h * T.k > vh ? top - r.y * T.k : top + (vh - r.h * T.k) / 2 - r.y * T.k;
   world.classList.toggle('fly', !!anim); apply();
 }
 

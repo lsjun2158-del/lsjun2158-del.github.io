@@ -29,6 +29,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .bar [role=tab][aria-selected=true]{color:#F1EDFF;border-bottom-color:var(--accent)}
 .bar .out{margin-left:auto;min-height:32px;padding:0 10px;border-radius:8px;font-size:12px;color:var(--text3);box-shadow:inset 0 0 0 1px var(--line)}
 .bar .out:hover{color:var(--warn)}
+/* 좁은 폰에서 로그아웃이 둘째 줄로 밀리지 않게 */
+@media (max-width:480px){.bar{gap:2px 14px}.bar .out{padding:0 8px}}
 .panes{flex:1;min-height:0;position:relative}
 .panes iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
 .gate{flex:1;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
