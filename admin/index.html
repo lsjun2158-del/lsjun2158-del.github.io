@@ -162,20 +162,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     // 오너인지는 규칙이 정한다 — 오너만 읽을 수 있는 문서가 읽히면 오너다
     fs.doc("feed/meta").get().then(function () {
       return scKnown.then(function () {
-        if (!scAuth.currentUser) {
-          // 이 판 전에 로그인해 Solo Climbing 이 비어 있다 — 계정 고르는 창 없이 같은 계정으로 한 번 다녀온다.
-          // 돌아오면 getRedirectResult → linkSc 가 붙인다. 10분에 한 번만, 실패하면 단추로 물러난다
-          var AUTO = "wmw-sc-auto", last = 0;
-          try { last = +sessionStorage.getItem(AUTO) || 0; } catch (e) {}
-          if (u.email && Date.now() - last > 10 * 60 * 1000) {
-            try { sessionStorage.setItem(AUTO, String(Date.now())); } catch (e) {}
-            msg("Solo Climbing 도 함께 여는 중…");
-            var p = new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({ login_hint: u.email });
-            auth.signInWithRedirect(p).catch(function () { ask("Solo Climbing 까지 함께 열려면 한 번 더 로그인해 주세요."); });
-            return;
-          }
-          ask("Solo Climbing 까지 함께 열려면 한 번 더 로그인해 주세요."); return;
-        }
+        // 이 판 전에 로그인해 Solo Climbing 만 비어 있는 브라우저 — 단추 한 번(팝업)으로 붙인다.
+        // 클릭 없는 리디렉트 받기는 게시본에서 결과가 비어 껐다(11-13, authDomain 이 사이트와 달라 막히는 것으로 추정)
+        if (!scAuth.currentUser) { ask("Solo Climbing 까지 함께 열려면 한 번 더 로그인해 주세요. (처음 한 번)"); return; }
         $("gate").hidden = true; $("panes").hidden = false; $("out").hidden = false;
         pick(cur);
       });

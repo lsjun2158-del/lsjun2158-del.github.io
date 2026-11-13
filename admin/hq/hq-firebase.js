@@ -77,8 +77,12 @@
    * login_hint 로 오너 계정을 미리 알려 계정 고르는 창이 뜨지 않게 한다. 맨 위 창일 때만(iframe 안에서는 안 함),
    * 10분에 한 번만(실패해도 되풀이하지 않음). 돌아오면 getRedirectResult → linkSc 가 이어 붙인다.
    */
+  // ⚠ 2026-11-13 게시본 확인: 리디렉트로 다녀오면 돌아온 결과가 비어 sc 가 붙지 않았다(팝업은 됨).
+  //   로그인 처리 주소(wmw-hq.firebaseapp.com)가 사이트와 달라 Chrome 이 저장 공간을 나눠 막는 것으로 본다(추정).
+  //   그래서 끈다 — 화면만 한 번 넘어갔다 올 뿐이다. sc 가 없으면 아래 «로그인» 단추(팝업)로 안내한다.
+  var AUTO_LINK_SC = false;
   function autoLinkSc(email) {
-    if (window.top !== window) return false;
+    if (!AUTO_LINK_SC || window.top !== window) return false;
     var KEY = "wmw-sc-auto";
     try { var t = Number(sessionStorage.getItem(KEY) || 0); if (Date.now() - t < 10 * 60 * 1000) return false; sessionStorage.setItem(KEY, String(Date.now())); } catch (e) { return false; }
     var p = new firebase.auth.GoogleAuthProvider();
