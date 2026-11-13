@@ -78,6 +78,11 @@
     sc.href = "/admin/soloclimbing/"; sc.textContent = "Solo Climbing 대시보드 →";
     sc.style.cssText = "font-family:var(--mono,monospace);font-size:10.5px;color:var(--accent-soft,#B79CFF);text-decoration:none";
     foot.insertBefore(sc, foot.firstChild);
+    // 세션 별자리 — 세션을 보고 지시를 보내는 화면 (relay.js 가 이 PC 에서 받아 넣는다)
+    var ss = document.createElement("a");
+    ss.href = "/admin/sessions/"; ss.textContent = "세션 별자리 →";
+    ss.style.cssText = sc.style.cssText;
+    foot.insertBefore(ss, foot.firstChild);
   }
 
   /* ---------- 오너 확인 뒤에만 db 를 건넨다 ---------- */

@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>세션 별자리 · WMW HQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0B0F14;--surface:#141B23;--high:#1A2330;--glass:rgba(20,27,35,.9);
+  --line:#243140;--line2:#2A3A4D;
+  --text:#E8F4FF;--muted:#8A9BB0;--dim:#5B6878;
+  --cyan:#00E5FF;--mint:#00FFC6;--orange:#FFB36C;--red:#FF4D6D;
+  --sans:"IBM Plex Sans KR","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:var(--cyan)}
+
+.top{position:fixed;inset:0 0 auto 0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:10px 16px;background:rgba(11,15,20,.92);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+.brand{font:600 12px var(--mono);letter-spacing:.14em;color:var(--muted);white-space:nowrap;text-decoration:none}
+.brand:hover{color:var(--text)}
+.stat{display:flex;flex-wrap:wrap;gap:6px}
+.stat button{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);font-size:13px;color:var(--muted)}
+.stat button b{font:600 14px var(--mono);color:var(--text)}
+.stat button.on{border-color:var(--text);color:var(--text)}
+.use{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px 14px}
+.meter{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);white-space:nowrap}
+.meter .bar{width:96px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.meter .bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--mint));transition:width .4s}
+.meter.warn .bar i{background:var(--orange)}
+.meter.full .bar i{background:var(--red)}
+.meter b{font:600 13px var(--mono);color:var(--text)}
+.meter small{font:500 11px var(--mono);color:var(--dim)}
+.meter.stale{opacity:.5}
+.relay{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.relay i{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.relay.on i{background:var(--mint);box-shadow:0 0 0 3px rgba(0,255,198,.18)}
+.relay.off i{background:var(--red)}
+
+.vp{position:fixed;inset:0;overflow:hidden;cursor:grab;touch-action:none}
+.vp.drag{cursor:grabbing}
+.world{position:absolute;left:0;top:0;transform-origin:0 0}
+.world.fly{transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.sky{position:absolute;left:-4000px;top:-4000px;width:8000px;height:8000px;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(138,155,176,.13) 1px,transparent 1.3px),radial-gradient(circle,rgba(232,244,255,.07) 1px,transparent 1.5px);
+  background-size:32px 32px,173px 173px;background-position:0 0,40px 70px}
+svg.links{position:absolute;overflow:visible;pointer-events:none;left:0;top:0}
+.ln{fill:none;transition:opacity .25s}
+.ln.run{stroke-dasharray:5 9;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-28}}
+@media (prefers-reduced-motion:reduce){.ln.run{animation:none}.node.st-run .orb::after{animation:none}}
+
+.node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;width:180px;transition:opacity .25s}
+.orb{position:relative;width:var(--sz,44px);height:var(--sz,44px);border-radius:50%;background:var(--surface);border:2px solid var(--c);display:grid;place-items:center;font:700 15px var(--mono);color:var(--c);transition:transform .15s,box-shadow .2s}
+.node:hover .orb{transform:scale(1.08)}
+.node.sel .orb{box-shadow:0 0 0 4px var(--bg),0 0 0 6px var(--cyan)}
+.lb{font-size:13px;font-weight:600;overflow-wrap:anywhere;text-shadow:0 1px 6px var(--bg)}
+.sm{font:500 11px var(--mono);color:var(--muted);overflow-wrap:anywhere}
+.node.st-run .orb::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid transparent;border-top-color:var(--mint);border-right-color:rgba(0,255,198,.35);animation:spin 1.1s linear infinite}
+@keyframes spin{to{transform:rotate(1turn)}}
+.node.st-wait .orb{border-color:var(--orange);color:var(--orange);background:rgba(255,179,108,.1)}
+.node.st-idle .orb{opacity:.8}
+.node.dim{opacity:.13}
+.ghub .orb{--sz:96px;font:700 14px var(--sans);background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.06),var(--surface) 70%);border-width:2.5px;line-height:1.25;padding:6px;text-align:center}
+.badges{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
+.bd{font:600 11px var(--mono);padding:1px 7px;border-radius:999px;border:1px solid var(--line2);color:var(--muted);white-space:nowrap}
+.bd.run{color:var(--mint);border-color:rgba(0,255,198,.4)}
+.bd.q{color:var(--orange);border-color:rgba(255,179,108,.5)}
+.bd.c{color:var(--cyan);border-color:rgba(0,229,255,.45)}
+.hub .orb{--sz:132px;font:700 17px var(--sans);color:var(--cyan);border-color:var(--cyan);background:radial-gradient(circle at 50% 35%,rgba(0,229,255,.16),var(--surface) 70%);box-shadow:0 0 60px rgba(0,229,255,.12)}
+[data-far="1"] .sess .lb,[data-far="1"] .sess .sm,[data-far="1"] .hub .sm{display:none}
+[data-far="1"] .ghub{transform:translate(-50%,-50%) scale(calc(var(--inv,1) * .62))}
+[data-far="1"] .hub{transform:translate(-50%,-50%) scale(calc(var(--inv,1) * .5))}
+[data-far="1"] .sess{transform:translate(-50%,-50%) scale(calc(var(--inv,1) * .38))}
+
+.radial{position:absolute;width:0;height:0;z-index:5}
+.radial button,.radial a{position:absolute;transform:translate(-50%,-50%);padding:6px 12px;border-radius:999px;background:var(--glass);border:1px solid var(--cyan);font-size:12.5px;white-space:nowrap;animation:pop .2s cubic-bezier(.2,.9,.3,1.3) both;backdrop-filter:blur(6px);color:var(--text);text-decoration:none}
+.radial .warn{border-color:var(--orange);color:var(--orange)}
+@keyframes pop{from{opacity:0;transform:translate(-50%,-50%) scale(.5)}}
+
+.groups{position:fixed;left:16px;bottom:16px;z-index:20;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100vw - 100px)}
+.groups button{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--glass);border:1px solid var(--line);font-size:13px;backdrop-filter:blur(8px)}
+.groups button.on{border-color:var(--text)}
+.groups i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.groups small{font:500 11px var(--mono);color:var(--muted)}
+.zoom{position:fixed;right:16px;bottom:16px;z-index:20;display:flex;flex-direction:column;gap:4px}
+.zoom button{width:36px;height:36px;border-radius:9px;background:var(--glass);border:1px solid var(--line);font:600 16px var(--mono)}
+.zoom .lv{font:500 10px var(--mono);text-align:center;color:var(--muted)}
+
+.panel{position:fixed;right:16px;top:var(--topH,64px);bottom:72px;z-index:25;width:390px;max-width:calc(100vw - 32px);display:flex;flex-direction:column;background:var(--glass);border:1px solid var(--line2);border-radius:14px;backdrop-filter:blur(14px);transform:translateX(calc(100% + 24px));transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.panel.open{transform:none}
+.ph{padding:16px 18px 12px;border-bottom:1px solid var(--line)}
+.gp{font:600 11px var(--mono);letter-spacing:.1em;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.panel h2{margin:6px 30px 4px 0;font-size:19px;overflow-wrap:anywhere}
+.x{position:absolute;right:10px;top:10px;width:30px;height:30px;border-radius:8px;color:var(--muted)}
+.st{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.d-run{background:var(--mint)}.d-wait{background:var(--orange)}.d-idle{background:var(--dim)}
+.pb{flex:1;overflow:auto;padding:4px 18px 10px}
+.panel h4{margin:14px 0 6px;font:600 11px var(--mono);letter-spacing:.1em;color:var(--dim)}
+.cv p{margin:0 0 6px;font-size:13px;overflow-wrap:anywhere}
+.cv .me{color:var(--cyan)}
+.who{font:600 11px var(--mono);color:var(--dim);margin-right:6px}
+.note{background:rgba(255,179,108,.08);border:1px solid rgba(255,179,108,.3);border-radius:10px;padding:10px 12px;font-size:13px;margin:8px 0}
+.lg{margin:0;padding:0;list-style:none}
+.lg li{font-size:13px;margin-bottom:12px;overflow-wrap:anywhere}
+.lg .tx{white-space:pre-wrap}
+.lg .rp{margin-top:6px;padding:8px 10px;border-left:2px solid var(--mint);background:rgba(0,255,198,.05);border-radius:0 8px 8px 0;white-space:pre-wrap;color:var(--text)}
+.lg .er{margin-top:6px;padding:8px 10px;border-left:2px solid var(--red);background:rgba(255,77,109,.06);border-radius:0 8px 8px 0;white-space:pre-wrap}
+.lg .meta{font:500 11px var(--mono);color:var(--dim);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lg .meta button{color:var(--muted);text-decoration:underline}
+.steps{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.steps span{font:500 10.5px var(--mono);padding:1px 6px;border-radius:5px;background:var(--high);color:var(--dim)}
+.steps .done{background:rgba(0,229,255,.12);color:var(--cyan)}
+.steps .bad{background:rgba(255,77,109,.14);color:var(--red)}
+.mem{display:flex;flex-direction:column;gap:6px}
+.mem button{display:flex;align-items:center;gap:8px;text-align:left;padding:8px 10px;border-radius:9px;border:1px solid var(--line);font-size:13px}
+.mem button:hover{border-color:var(--muted)}
+.mem small{margin-left:auto;font:500 11px var(--mono);color:var(--dim);white-space:nowrap}
+.cp{padding:12px 18px 16px;border-top:1px solid var(--line)}
+.to{font-size:12px;color:var(--muted);margin-bottom:6px;overflow-wrap:anywhere}
+.to b{color:var(--text)}
+textarea{width:100%;min-height:68px;resize:vertical;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:14px/1.45 var(--sans)}
+textarea:focus{outline:none;border-color:var(--cyan)}
+.rw{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:8px;font-size:12px;color:var(--muted)}
+.send{margin-left:auto;padding:7px 16px;border-radius:9px;background:var(--cyan);color:#041016;font-weight:700}
+.send:disabled{opacity:.4;cursor:default}
+.send:active{transform:scale(.97)}
+.toast{position:fixed;left:50%;top:calc(var(--topH,64px) + 8px);z-index:40;transform:translate(-50%,-10px);opacity:0;background:var(--high);border:1px solid var(--cyan);padding:9px 14px;border-radius:10px;font-size:13px;transition:.2s;pointer-events:none;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.empty{position:fixed;inset:0;display:grid;place-items:center;color:var(--muted);font-size:14px;pointer-events:none}
+
+#gate{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#gate .box{max-width:360px;width:100%;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:28px 24px;text-align:center}
+#gate b{display:block;font:700 15px var(--mono);letter-spacing:.14em}
+#gate button{margin-top:22px;width:100%;padding:11px 14px;border-radius:7px;background:var(--cyan);color:#041016;font-weight:700}
+#gate p{margin:14px 0 0;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+@media (max-width:700px){.relay,.use{margin-left:0}.meter .bar{width:64px}.panel{top:auto;bottom:70px;height:62vh}}
+</style>
+</head>
+<body>
+<div id="gate"><div class="box"><b>WMW · 세션 별자리</b><button id="login">Google 로 로그인</button><p id="gateMsg">오너 계정만 열립니다.</p></div></div>
+
+<div class="top" id="top">
+  <a class="brand" href="../">← HQ</a>
+  <span class="brand">세션 별자리</span>
+  <div class="stat" id="stat"></div>
+  <div class="use" id="use"></div>
+  <span class="relay" id="relay"><i></i><span>PC 중계 확인 중</span></span>
+</div>
+
+<div class="vp" id="vp"><div class="world" id="world"></div></div>
+<div class="empty" id="empty">세션 자료를 기다리는 중…</div>
+<div class="groups" id="groups"></div>
+<div class="zoom"><button id="zi" aria-label="확대">+</button><div class="lv" id="lv">100%</div><button id="zo" aria-label="축소">−</button><button id="zf" aria-label="전체 보기">⤢</button></div>
+
+<aside class="panel" id="panel">
+  <button class="x" id="px" aria-label="닫기">✕</button>
+  <div class="ph"><div class="gp" id="pg"></div><h2 id="pt"></h2><div class="st" id="ps"></div></div>
+  <div class="pb" id="pb"></div>
+  <div class="cp" id="cp">
+    <div class="to" id="pto"></div>
+    <textarea id="msg"></textarea>
+    <div class="rw"><label><input type="checkbox" id="rep"> 끝나면 업무보고</label><span id="cost"></span><button class="send" id="send">보내기</button></div>
+  </div>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script>
+/*
+ * 세션 별자리 — 사내 홈페이지 웹판의 한 쪽.
+ *   읽기: feed/sessions  (이 PC 의 중계 relay.js 가 20초마다 올림)
+ *   쓰기: commands/<자동 id> = { to:{kind:'session', id}, text, report, state:'sent', createdAt }
+ *   중계가 그 세션에 한 턴으로 넣고 상태(received → queued → working → done/failed)와 답을 적는다.
+ * 정본: WMW/공통/HQ/web/sessions/ · 설명: 공통/HQ/README.md «세션 별자리»
+ */
+const CONFIG = {
+  apiKey: "AIzaSyAjF8hR6dHgIBD5-_AzSu5qRcLN46jPvKI",
+  authDomain: "wmw-hq.firebaseapp.com",
+  projectId: "wmw-hq",
+  storageBucket: "wmw-hq.firebasestorage.app",
+  messagingSenderId: "953566283020",
+  appId: "1:953566283020:web:b8b505a01ff9d90870f529"
+};
+const app = firebase.initializeApp(CONFIG), auth = app.auth(), fs = app.firestore();
+const provider = new firebase.auth.GoogleAuthProvider(); provider.setCustomParameters({ prompt: 'select_account' });
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+$('login').onclick = () => auth.signInWithPopup(provider).catch(e => { if (/popup/.test(e.code || '')) auth.signInWithRedirect(provider); else $('gateMsg').textContent = '로그인하지 못했습니다: ' + (e.code || e.message); });
+auth.onAuthStateChanged(u => {
+  if (!u) { $('gate').style.display = 'flex'; return; }
+  fs.doc('feed/sessions').onSnapshot(s => { $('gate').style.display = 'none'; onFeed(s.exists ? s.data() : null); },
+    e => { $('gateMsg').textContent = e.code === 'permission-denied' ? '이 계정은 열 수 없습니다 (오너 계정만).' : '읽지 못했습니다: ' + e.message; $('gate').style.display = 'flex'; });
+  fs.doc('feed/usage').onSnapshot(s => { USAGE = s.exists ? s.data() : null; renderUsage(); }, () => {});
+  fs.collection('commands').orderBy('createdAt', 'desc').limit(120).onSnapshot(s => { CMDS = s.docs.map(d => ({ id: d.id, ...d.data() })); refreshPanel(); renderStat(); }, () => {});
+});
+
+/* ───────── 자료 ───────── */
+const PALETTE = ['#8A6DFF', '#00E5FF', '#00FFC6', '#FF6FB0', '#FFB36C', '#7CC4FF', '#C9F26B'];
+let G = [], S = [], CMDS = [], RELAY = null, HIDDEN = null;
+const gOf = id => G.find(g => g.id === id) || G[G.length - 1];
+const stTxt = { run: '작업 중', wait: '앱에서 내 답 기다림', idle: '대기' };
+const ago = t => { const m = Math.round((Date.now() - t) / 60000); if (m < 1) return '방금'; if (m < 60) return m + '분 전'; const h = Math.round(m / 60); if (h < 24) return h + '시간 전'; return Math.round(h / 24) + '일 전'; };
+const appLink = id => 'claude://claude.ai/epitaxy/' + id;
+const cmdsOf = id => CMDS.filter(c => c.to && c.to.id === id);
+const openCmds = id => cmdsOf(id).filter(c => ['sent', 'received', 'queued', 'working'].includes(c.state));
+
+function onFeed(d) {
+  if (!d) { $('empty').textContent = '아직 세션 자료가 없습니다 — PC 에서 relay.js 를 켜 주세요'; return; }
+  $('empty').style.display = 'none';
+  RELAY = d.relay || null; HIDDEN = d.hidden || null;
+  const groups = (d.groups || []).filter(g => (d.sessions || []).some(s => s.group === g.id));
+  if ((d.sessions || []).some(s => !s.group || !groups.some(g => g.id === s.group))) groups.push({ id: '_', name: '묶음 없음' });
+  G = groups.map((g, i) => ({ ...g, c: PALETTE[i % PALETTE.length] }));
+  S = (d.sessions || []).map(s => ({ ...s, g: groups.some(g => g.id === s.group) ? s.group : '_' }));
+  const sig = G.map(g => g.id).join() + '|' + S.map(s => s.id + s.g + (s.parent || '')).join();
+  if (sig !== layoutSig) { layout(); layoutSig = sig; draw(); if (!fitted) { fitted = true; requestAnimationFrame(() => fit(allBounds(), false)); } }
+  else draw();
+  renderStat(); renderGroups(); renderRelay(); refreshPanel();
+}
+
+/* ───────── 배치: 오너 → 묶음 → 세션 → 갈래 ───────── */
+let pos = {}, layoutSig = '', fitted = false;
+function layout() {
+  pos = {}; const R = Math.max(560, 120 * G.length), RS = 240, RC = 180;
+  G.forEach((g, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / G.length; pos['g:' + g.id] = { x: R * Math.cos(a), y: R * Math.sin(a), a }; });
+  G.forEach(g => {
+    const hub = pos['g:' + g.id], tops = S.filter(s => s.g === g.id && !(s.parent && S.some(p => p.id === s.parent && p.g === g.id))).sort((a, b) => a.order - b.order), n = tops.length;
+    const spread = Math.min(2.6, .5 * (n - 1));
+    tops.forEach((s, j) => {
+      const a = hub.a + (n > 1 ? -spread / 2 + spread * j / (n - 1) : 0);
+      pos[s.id] = { x: hub.x + RS * Math.cos(a), y: hub.y + RS * Math.sin(a), a };
+      kids(s, a, 1);
+    });
+  });
+  function kids(p, a, depth) {
+    S.filter(c => c.parent === p.id && c.g === p.g).forEach((c, k, arr) => {
+      const ca = a + (k - (arr.length - 1) / 2) * .45;
+      pos[c.id] = { x: pos[p.id].x + RC * Math.cos(ca), y: pos[p.id].y + RC * Math.sin(ca), a: ca };
+      if (depth < 3) kids(c, ca, depth + 1);
+    });
+  }
+  S.forEach(s => { if (!pos[s.id]) { const h = pos['g:' + s.g]; pos[s.id] = { x: h.x + 60, y: h.y + 300, a: h.a }; } });
+}
+
+/* ───────── 그리기 ───────── */
+const world = $('world'), vp = $('vp');
+let focusG = null, filt = null, cur = null;
+function draw() {
+  let L = '', N = '';
+  G.forEach(g => {
+    const h = pos['g:' + g.id], list = S.filter(s => s.g === g.id), anyRun = list.some(s => s.st === 'run');
+    L += `<path data-grp="${g.id}" class="ln ${anyRun ? 'run' : ''}" d="M0 0 L${h.x} ${h.y}" stroke="${g.c}" stroke-opacity="${anyRun ? .75 : .3}" stroke-width="2" ${anyRun ? '' : 'stroke-dasharray="3 9"'}/>`;
+    const run = list.filter(s => s.st === 'run').length, w = list.filter(s => s.st === 'wait').length, oc = list.filter(s => openCmds(s.id).length).length;
+    N += `<button class="node ghub" data-g="${g.id}" data-grp="${g.id}" style="left:${h.x}px;top:${h.y}px;--c:${g.c}"><span class="orb">${esc(g.name)}</span>
+      <span class="badges"><span class="bd">${list.length}</span>${run ? `<span class="bd run">▶ ${run}</span>` : ''}${w ? `<span class="bd q">? ${w}</span>` : ''}${oc ? `<span class="bd c">✉ ${oc}</span>` : ''}</span></button>`;
+  });
+  S.forEach(s => {
+    const p = pos[s.id], parent = s.parent && pos[s.parent] && S.find(x => x.id === s.parent)?.g === s.g ? pos[s.parent] : pos['g:' + s.g], g = gOf(s.g);
+    const mx = (parent.x + p.x) / 2, my = (parent.y + p.y) / 2, cx = mx - (p.y - parent.y) * .12, cy = my + (p.x - parent.x) * .12;
+    L += `<path data-grp="${s.g}" data-ls="${s.id}" class="ln ${s.st === 'run' ? 'run' : ''}" d="M${parent.x} ${parent.y} Q${cx} ${cy} ${p.x} ${p.y}" stroke="${s.st === 'wait' ? '#FFB36C' : g.c}" stroke-opacity="${s.st === 'idle' ? .28 : .85}" stroke-width="${s.st === 'idle' ? 1.2 : 2.2}"/>`;
+    const oc = openCmds(s.id).length, sz = s.st === 'run' ? 54 : s.st === 'wait' ? 48 : 38;
+    const ic = s.st === 'wait' ? '?' : oc ? '✉' : s.st === 'run' ? '▶' : '';
+    N += `<button class="node sess st-${s.st}" data-s="${s.id}" data-grp="${s.g}" style="left:${p.x}px;top:${p.y}px;--c:${g.c};--sz:${sz}px">
+      <span class="orb">${ic}</span><span class="lb">${esc(s.title)}</span><span class="sm">${stTxt[s.st]} · ${ago(s.last)}</span></button>`;
+  });
+  N += `<button class="node hub" data-o="1" style="left:0;top:0"><span class="orb">오너</span><span class="sm">누르면 비서창에게 맡기기</span></button>`;
+  const rd = $('radial'), keep = rd && !rd.hidden ? rd.outerHTML : '<div class="radial" id="radial" hidden></div>';
+  world.innerHTML = `<div class="sky"></div><svg class="links" width="1" height="1">${L}</svg>${N}${keep}`;
+  applyDim(); markSel();
+}
+function applyDim() {
+  world.querySelectorAll('[data-grp]').forEach(el => {
+    let on = !focusG || el.dataset.grp === focusG;
+    const sid = el.dataset.s || el.dataset.ls;
+    if (on && filt && sid) { const s = S.find(x => x.id === sid); on = filt === 'msg' ? openCmds(sid).length > 0 : s.st === filt; }
+    el.classList.toggle('dim', !on); if (el.tagName !== 'BUTTON') el.style.opacity = on ? '' : .08;
+  });
+}
+function markSel() { world.querySelectorAll('.node').forEach(el => el.classList.toggle('sel', !!cur && ((cur.k === 's' && el.dataset.s === cur.id) || (cur.k === 'g' && el.dataset.g === cur.id) || (cur.k === 'o' && el.dataset.o)))); }
+
+function renderStat() {
+  const n = k => k === 'msg' ? S.filter(s => openCmds(s.id).length).length : S.filter(s => s.st === k).length;
+  $('stat').innerHTML = [['run', '작업 중'], ['wait', '내 답 기다림'], ['msg', '지시 진행'], ['idle', '대기']].map(([k, t]) => `<button data-f="${k}" class="${filt === k ? 'on' : ''}"><b>${n(k)}</b>${t}</button>`).join('');
+}
+$('stat').onclick = e => { const b = e.target.closest('button'); if (!b) return; filt = filt === b.dataset.f ? null : b.dataset.f; renderStat(); applyDim(); };
+function renderGroups() {
+  $('groups').innerHTML = `<button data-gf="" class="${focusG ? '' : 'on'}">전체 <small>${S.length}</small></button>` + G.map(g => `<button data-gf="${g.id}" class="${focusG === g.id ? 'on' : ''}"><i style="background:${g.c}"></i>${esc(g.name)} <small>${S.filter(s => s.g === g.id).length}</small></button>`).join('');
+}
+$('groups').onclick = e => { const b = e.target.closest('button'); if (b) focusGroup(b.dataset.gf || null); };
+function focusGroup(id) { focusG = id; renderGroups(); applyDim(); fit(id ? groupBounds(id) : allBounds(), true); }
+function renderRelay() {
+  const el = $('relay'), at = RELAY && RELAY.at ? Date.parse(RELAY.at) : 0, live = Date.now() - at < 6 * 60 * 1000;
+  el.className = 'relay ' + (live ? 'on' : 'off');
+  el.lastElementChild.textContent = live ? `PC 중계 켜짐 · ${ago(at)} 갱신` : `PC 중계 꺼짐 — 지시는 쌓였다가 켜지면 갑니다`;
+}
+setInterval(() => { renderRelay(); renderUsage(); }, 30000);
+
+/* 사용량 — 현재 세션(5시간) · 주간. relay.js 가 2분마다 읽어 바뀌면 올린다 */
+let USAGE = null;
+const left = iso => { const ms = Date.parse(iso) - Date.now(); if (!(ms > 0)) return '곧'; const m = Math.round(ms / 60000); if (m < 60) return m + '분'; const h = Math.floor(m / 60); if (h < 24) return h + '시간 ' + (m % 60) + '분'; return Math.floor(h / 24) + '일 ' + (h % 24) + '시간'; };
+function meter(label, w, stale) {
+  if (!w) return '';
+  const cls = w.pct >= 95 ? 'full' : w.pct >= 80 ? 'warn' : '';
+  return `<span class="meter ${cls} ${stale ? 'stale' : ''}" title="${esc(label)} — ${w.resetsAt ? '초기화 ' + new Date(w.resetsAt).toLocaleString('ko-KR') : ''}">${label} <span class="bar"><i style="width:${Math.min(100, w.pct)}%"></i></span><b>${w.pct}%</b>${w.resetsAt ? `<small>${left(w.resetsAt)} 뒤 초기화</small>` : ''}</span>`;
+}
+function renderUsage() {
+  const el = $('use'); if (!USAGE) { el.innerHTML = ''; return; }
+  const stale = !USAGE.ok || Date.now() - Date.parse(USAGE.at) > 15 * 60 * 1000;
+  el.innerHTML = meter('현재 세션', USAGE.session, stale) + meter('주간', USAGE.week, stale)
+    + (!USAGE.ok ? `<span class="meter stale" title="${esc(USAGE.error || '')}">사용량 갱신 안 됨</span>` : '');
+}
+
+/* ───────── 끌기 · 확대 ───────── */
+let T = { x: 0, y: 0, k: 1 }; const minK = .12, maxK = 2.2;
+function apply() { world.style.transform = `translate(${T.x}px,${T.y}px) scale(${T.k})`; $('lv').textContent = Math.round(T.k * 100) + '%'; vp.dataset.far = T.k < .5 ? '1' : '0'; world.style.setProperty('--inv', (1 / T.k).toFixed(3)); }
+function zoomAt(px, py, k2) { k2 = Math.max(minK, Math.min(maxK, k2)); T.x = px - (px - T.x) * k2 / T.k; T.y = py - (py - T.y) * k2 / T.k; T.k = k2; apply(); }
+vp.addEventListener('wheel', e => { e.preventDefault(); world.classList.remove('fly'); zoomAt(e.clientX, e.clientY, T.k * Math.exp(-e.deltaY * .0015)); }, { passive: false });
+const ptrs = new Map(); let pinch = null, moved = false;
+vp.addEventListener('pointerdown', e => {
+  moved = false; if (e.target.closest('button,a')) return;
+  world.classList.remove('fly'); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); vp.setPointerCapture(e.pointerId); vp.classList.add('drag');
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), k: T.k }; }
+});
+vp.addEventListener('pointermove', e => {
+  if (!ptrs.has(e.pointerId)) return; const p = ptrs.get(e.pointerId), dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+  if (ptrs.size === 2 && pinch) { const [a, b] = [...ptrs.values()]; zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, pinch.k * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d); return; }
+  if (Math.abs(dx) + Math.abs(dy) > 2) moved = true; T.x += dx; T.y += dy; apply();
+});
+const end = e => { if (ptrs.has(e.pointerId) && !moved && ptrs.size === 1) closeRadial(); ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (!ptrs.size) vp.classList.remove('drag'); };
+vp.addEventListener('pointerup', end); vp.addEventListener('pointercancel', end);
+$('zi').onclick = () => { world.classList.add('fly'); zoomAt(innerWidth / 2, innerHeight / 2, T.k * 1.35); };
+$('zo').onclick = () => { world.classList.add('fly'); zoomAt(innerWidth / 2, innerHeight / 2, T.k / 1.35); };
+$('zf').onclick = () => focusGroup(null);
+function boundsOf(keys, pad) { const ps = keys.map(k => pos[k] || { x: 0, y: 0 }); const x = Math.min(0, ...ps.map(p => p.x)) - pad, y = Math.min(0, ...ps.map(p => p.y)) - pad; return { x, y, w: Math.max(0, ...ps.map(p => p.x)) + pad - x, h: Math.max(0, ...ps.map(p => p.y)) + pad + 40 - y }; }
+const allBounds = () => boundsOf(Object.keys(pos), 110);
+const groupBounds = id => { const ks = ['g:' + id, ...S.filter(s => s.g === id).map(s => s.id)]; const ps = ks.map(k => pos[k]); const x = Math.min(...ps.map(p => p.x)) - 120, y = Math.min(...ps.map(p => p.y)) - 120; return { x, y, w: Math.max(...ps.map(p => p.x)) + 120 - x, h: Math.max(...ps.map(p => p.y)) + 160 - y }; };
+function fit(r, anim) {
+  const top = $('top').offsetHeight + 16, bottom = $('groups').offsetHeight + 34, side = 24, rp = $('panel').classList.contains('open') && innerWidth > 700 ? 410 : 0;
+  const vw = innerWidth - side * 2 - rp, vh = innerHeight - top - bottom;
+  T.k = Math.max(minK, Math.min(1.3, Math.min(vw / r.w, vh / r.h)));
+  T.x = side + (vw - r.w * T.k) / 2 - r.x * T.k; T.y = top + (vh - r.h * T.k) / 2 - r.y * T.k;
+  world.classList.toggle('fly', !!anim); apply();
+}
+
+/* ───────── 둥근 메뉴 ───────── */
+function openRadial(id) {
+  const s = S.find(x => x.id === id), p = pos[id], rd = $('radial');
+  const items = [['지시하기', 'cmd'], ['대화 · 지시 기록', 'cmd']].concat(s.st === 'wait' ? [['앱에서 답하기', 'app', 'warn']] : [['앱에서 열기', 'app']]);
+  rd.hidden = false; rd.style.left = p.x + 'px'; rd.style.top = p.y + 'px';
+  const rr = 84;
+  rd.innerHTML = items.map(([t, a, cl], i) => { const ang = -Math.PI / 2 + i * 2 * Math.PI / items.length; const st = `left:${rr * Math.cos(ang)}px;top:${rr * Math.sin(ang)}px;animation-delay:${i * 22}ms`;
+    return a === 'app' ? `<a class="${cl || ''}" href="${appLink(id)}" style="${st}">${t}</a>` : `<button data-ra="${a}" data-rid="${id}" style="${st}">${t}</button>`; }).join('');
+}
+function closeRadial() { const rd = $('radial'); if (rd) rd.hidden = true; }
+
+/* ───────── 상세 패널 ───────── */
+const STEP = ['보냄', 'PC 받음', '세션 전달', '작업 중', '답 옴'];
+const stepIdx = { sent: 0, received: 1, queued: 1, working: 3, done: 4, failed: -1, cancelled: -1 };
+function cmdHTML(c, showTo) {
+  const n = stepIdx[c.state] ?? 0, when = c.createdAt && c.createdAt.toMillis ? ago(c.createdAt.toMillis()) : '방금';
+  const to = showTo ? `<b>${esc((S.find(s => s.id === c.to.id) || {}).title || '세션')}</b> · ` : '';
+  const steps = c.state === 'failed' || c.state === 'cancelled'
+    ? `<span class="bad">${c.state === 'failed' ? '실패' : '취소함'}</span>`
+    : STEP.map((x, i) => `<span class="${i <= n ? 'done' : ''}">${i === 1 && c.state === 'queued' ? '줄 섬 — 세션이 일하는 중' : x}</span>`).join('');
+  const use = c.usage ? ` · 토큰 ${Math.round((c.usage.in + c.usage.out) / 1000)}k` : '';
+  return `<li><div class="meta">${to}${when}${use}${['sent', 'received', 'queued'].includes(c.state) ? ` · <button data-cancel="${c.id}">취소</button>` : ''}</div>
+    <div class="tx">${esc(c.text)}</div><div class="steps">${steps}</div>
+    ${c.reply ? `<div class="rp">${esc(c.reply)}</div>` : ''}${c.error && !c.reply ? `<div class="er">${esc(c.error)}</div>` : ''}</li>`;
+}
+function openSession(id) {
+  const s = S.find(x => x.id === id); if (!s) return; const g = gOf(s.g); cur = { k: 's', id };
+  const par = s.parent && S.find(x => x.id === s.parent);
+  $('pg').innerHTML = `<i class="dot" style="background:${g.c};border-radius:2px"></i>${esc(g.name.toUpperCase())}${par ? ' · 갈래 ← ' + esc(par.title) : ''}`;
+  $('pt').textContent = s.title;
+  $('ps').innerHTML = `<i class="dot d-${s.st}"></i>${stTxt[s.st]} · ${ago(s.last)} · ${esc(s.model || '')} · ${esc(s.mode || '')} · <a href="${appLink(id)}">앱에서 열기</a>`;
+  const L = cmdsOf(id);
+  $('pb').innerHTML = (s.st === 'wait' ? `<div class="note">이 세션은 앱에서 승인이나 답을 기다리고 있습니다. 여기서 보내면 그 일이 끝난 뒤에 들어갑니다. 바로 답하려면 <a href="${appLink(id)}">앱에서 열기</a>.</div>` : '')
+    + `<h4>최근 대화</h4><div class="cv">${s.me ? `<p class="me"><span class="who">나</span>${esc(s.me)}</p>` : ''}${s.ai ? `<p><span class="who">AI</span>${esc(s.ai)}</p>` : ''}${!s.me && !s.ai ? '<p style="color:var(--dim)">읽을 대화 없음</p>' : ''}</div>`
+    + `<h4>내가 보낸 지시 ${L.length}</h4><ul class="lg">${L.length ? L.map(c => cmdHTML(c)).join('') : '<li style="color:var(--dim)">아직 보낸 지시 없음</li>'}</ul>`;
+  $('pto').innerHTML = `받는 곳: <b>${esc(s.title)}</b>${s.canSend ? '' : ' — 대화 파일이 없어 보낼 수 없음'}`;
+  $('msg').placeholder = '이 세션에 시킬 일 — 오너가 앱에서 치는 것과 같게 들어갑니다';
+  $('send').disabled = !s.canSend; $('cost').textContent = '';
+  show();
+}
+function openGroup(id, keepView) {
+  const g = gOf(id), list = S.filter(s => s.g === id); cur = { k: 'g', id };
+  $('pg').innerHTML = `<i class="dot" style="background:${g.c};border-radius:2px"></i>묶음`; $('pt').textContent = g.name;
+  $('ps').textContent = `세션 ${list.length}개 · 작업 중 ${list.filter(s => s.st === 'run').length} · 내 답 기다림 ${list.filter(s => s.st === 'wait').length}`;
+  const L = CMDS.filter(c => list.some(s => s.id === c.to?.id)).slice(0, 20);
+  $('pb').innerHTML = `<h4>세션</h4><div class="mem">${list.map(s => `<button data-open="${s.id}"><i class="dot d-${s.st}"></i>${esc(s.title)}<small>${ago(s.last)}</small></button>`).join('')}</div>`
+    + `<h4>이 묶음에 보낸 지시</h4><ul class="lg">${L.length ? L.map(c => cmdHTML(c, true)).join('') : '<li style="color:var(--dim)">없음</li>'}</ul>`;
+  const n = list.filter(s => s.canSend).length;
+  $('pto').innerHTML = `받는 곳: <b>${esc(g.name)} 묶음 전부</b> — 세션 ${n}개에 같은 말`;
+  $('msg').placeholder = '이 묶음 전부에게 — 예: 오늘 한 것 정리해서 보고해';
+  $('send').disabled = !n; $('cost').textContent = n > 1 ? `사용량 ×${n}` : '';
+  show(); if (!keepView) focusGroup(id);
+}
+function secretary() { return S.find(s => s.title === '비서창'); }
+function openOwner() {
+  cur = { k: 'o' }; const sec = secretary();
+  $('pg').textContent = '오너'; $('pt').textContent = '비서창에게 맡기기';
+  $('ps').textContent = '누구에게 갈지 비서창이 정해서 나눕니다';
+  const waits = S.filter(s => s.st === 'wait');
+  $('pb').innerHTML = `<h4>앱에서 내 답을 기다리는 세션 ${waits.length}</h4><div class="mem">${waits.map(s => `<button data-open="${s.id}"><i class="dot d-wait"></i>${esc(s.title)}<small>${ago(s.last)}</small></button>`).join('') || '<span style="color:var(--dim);font-size:13px">없음</span>'}</div>`
+    + `<h4>최근 지시 전체</h4><ul class="lg">${CMDS.slice(0, 25).map(c => cmdHTML(c, true)).join('') || '<li style="color:var(--dim)">없음</li>'}</ul>`
+    + (HIDDEN ? `<p style="font-size:12px;color:var(--dim)">숨긴 세션: 보관 ${HIDDEN.archived} · 예약 작업이 만든 것 ${HIDDEN.scheduled}</p>` : '');
+  $('pto').innerHTML = sec ? '받는 곳: <b>비서창</b> → 알맞은 세션으로' : '비서창 세션을 찾지 못했습니다';
+  $('msg').placeholder = '예: 릴스 더빙은 A 로 하고, 리듬 블레이드는 영상 보고 다시 말할게';
+  $('send').disabled = !sec; $('cost').textContent = '';
+  show();
+}
+function show() { $('panel').classList.add('open'); markSel(); closeRadial(); }
+function refreshPanel() { if (!cur || !$('panel').classList.contains('open')) return; const keep = $('msg').value; cur.k === 's' ? openSession(cur.id) : cur.k === 'g' ? openGroup(cur.id, true) : openOwner(); $('msg').value = keep; }
+$('px').onclick = () => { $('panel').classList.remove('open'); cur = null; markSel(); };
+
+$('send').onclick = async () => {
+  const text = $('msg').value.trim(); if (!text || !cur) { $('msg').focus(); return; }
+  const ids = cur.k === 's' ? [cur.id] : cur.k === 'g' ? S.filter(s => s.g === cur.id && s.canSend).map(s => s.id) : [secretary()?.id].filter(Boolean);
+  if (!ids.length) return;
+  if (ids.length > 1 && !confirm(`세션 ${ids.length}개에 같은 지시를 보냅니다.\n세션마다 대화를 다시 읽어서 사용량이 ${ids.length}배 듭니다. 보낼까요?`)) return;
+  $('send').disabled = true;
+  try {
+    const batch = fs.batch();
+    for (const id of ids) batch.set(fs.collection('commands').doc(), { to: { kind: 'session', id }, text, report: $('rep').checked, state: 'sent', createdAt: firebase.firestore.FieldValue.serverTimestamp(), from: 'sessions-page' });
+    await batch.commit();
+    $('msg').value = ''; toast(`${ids.length}곳에 보냈습니다 — PC 중계가 받으면 «PC 받음» 으로 바뀝니다`);
+  } catch (e) { toast('보내지 못했습니다: ' + (e.code || e.message)); }
+  $('send').disabled = false;
+};
+$('pb').addEventListener('click', async e => {
+  const o = e.target.closest('[data-open]'); if (o) { openSession(o.dataset.open); fit(boundsOf([o.dataset.open], 260), true); return; }
+  const c = e.target.closest('[data-cancel]');
+  if (c) { try { await fs.doc('commands/' + c.dataset.cancel).update({ state: 'cancelled', 'at.cancelled': new Date().toISOString() }); toast('취소했습니다'); } catch (er) { toast('취소하지 못했습니다: ' + (er.code || er.message)); } }
+});
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3200); }
+
+world.addEventListener('click', e => {
+  if (moved) return;
+  const ra = e.target.closest('[data-ra]'); if (ra) { closeRadial(); openSession(ra.dataset.rid); if (ra.textContent === '지시하기') $('msg').focus(); return; }
+  const s = e.target.closest('[data-s]'); if (s) { cur = { k: 's', id: s.dataset.s }; markSel(); openRadial(s.dataset.s); return; }
+  const g = e.target.closest('[data-g]'); if (g) { openGroup(g.dataset.g); return; }
+  if (e.target.closest('[data-o]')) openOwner();
+});
+document.documentElement.style.setProperty('--topH', $('top').offsetHeight + 10 + 'px');
+addEventListener('resize', () => { if (Object.keys(pos).length) fit(focusG ? groupBounds(focusG) : allBounds(), false); });
+</script>
+</body>
+</html>
