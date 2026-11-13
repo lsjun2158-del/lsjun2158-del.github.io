@@ -82,10 +82,12 @@ svg.links{position:absolute;overflow:visible;pointer-events:none;left:0;top:0}
 .bd.q{color:var(--orange);border-color:rgba(255,179,108,.5)}
 .bd.c{color:var(--cyan);border-color:rgba(0,229,255,.45)}
 .hub .orb{--sz:132px;font:700 17px var(--sans);color:var(--cyan);border-color:var(--cyan);background:radial-gradient(circle at 50% 35%,rgba(0,229,255,.16),var(--surface) 70%);box-shadow:0 0 60px rgba(0,229,255,.12)}
-[data-far="1"] .sess .lb,[data-far="1"] .sess .sm,[data-far="1"] .hub .sm{display:none}
-[data-far="1"] .ghub{transform:translate(-50%,-50%) scale(calc(var(--inv,1) * .62))}
-[data-far="1"] .hub{transform:translate(-50%,-50%) scale(calc(var(--inv,1) * .5))}
-[data-far="1"] .sess{transform:translate(-50%,-50%) scale(calc(var(--inv,1) * .38))}
+/* 멀리서 보면 세션 이름만 감춘다(자리는 그대로 — 별끼리 안 겹치게 재는 상자가 줌에 따라 바뀌지 않게) */
+[data-far="1"] .sess .lb,[data-far="1"] .sess .sm,[data-far="1"] .hub .sm{visibility:hidden}
+/* 끌어 옮기기 — PC 는 눌러 끌기, 폰은 꾹 눌러 끌기 (2026-11-14 오너) */
+.node{touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.node.drag{z-index:4}
+.node.drag .orb{transform:scale(1.12);box-shadow:0 0 0 4px var(--bg),0 0 0 6px var(--mint)}
 
 .radial{position:absolute;width:0;height:0;z-index:5}
 .radial button,.radial a{position:absolute;transform:translate(-50%,-50%);padding:6px 12px;border-radius:999px;background:var(--glass);border:1px solid var(--cyan);font-size:12.5px;white-space:nowrap;animation:pop .2s cubic-bezier(.2,.9,.3,1.3) both;backdrop-filter:blur(6px);color:var(--text);text-decoration:none}
@@ -273,18 +275,26 @@ function onFeed(d) {
   G = groups.map((g, i) => ({ ...g, c: PALETTE[i % PALETTE.length] }));
   S = (d.sessions || []).map(s => ({ ...s, g: groups.some(g => g.id === s.group) ? s.group : '_' }));
   const sig = (MOB() ? 'm|' : '') + G.map(g => g.id).join() + '|' + S.map(s => s.id + s.g + (s.parent || '')).join();
-  if (sig !== layoutSig) { layout(); layoutSig = sig; draw(); if (!fitted) { fitted = true; requestAnimationFrame(() => fit(allBounds(), false)); } }
-  else draw();
+  if (sig !== layoutSig) {
+    layout(); layoutSig = sig; draw();
+    // 처음에는 화면에 그리기 전에 다 풀어 놓고 맞춘다 — 그 뒤 새 별이 생기면 움직이며 자리를 찾는다
+    if (!fitted) { fitted = true; settle(); fit(allBounds(), false); } else kick(.6);
+  } else { draw(); kick(.12); }
   renderStat(); renderGroups(); renderRelay(); refreshPanel();
 }
 
-/* ───────── 배치: 오너 → 묶음 → 세션 → 갈래 ───────── */
-let pos = {}, layoutSig = '', fitted = false;
+/* ───────── 배치: 오너 → 묶음 → 세션 → 갈래 ─────────
+ * 둥글게 놓고 시작해 힘으로 푼다(2026-11-14 오너 «옵시디언처럼 절대 겹치지 않게 유기적으로»).
+ * 선은 용수철, 별끼리는 서로 밀고, 별 + 이름 상자가 겹치면 바로 떼어 놓는다. 오너 별만 가운데 고정.
+ * 이미 자리 잡은 별은 자료가 새로 와도 그 자리에서 이어 움직인다 */
+let pos = {}, layoutSig = '', fitted = false, LEN = {};
 function layout() {
-  pos = {};
+  const old = pos, m = MOB();
+  // 선은 짧게, 미는 힘은 약하게 — 별자리를 작게 모아 두고 겹침은 상자 규칙이 막는다
+  const R = m ? Math.max(140, 26 * G.length) : Math.max(220, 46 * G.length), RS = m ? 95 : 120, RC = m ? 70 : 90;
+  LEN = { g: R, s: RS, c: RC };
+  pos = { o: { x: 0, y: 0, fixed: true } };
   const topsOf = g => S.filter(s => s.g === g.id && !(s.parent && S.some(p => p.id === s.parent && p.g === g.id))).sort((a, b) => a.order - b.order);
-  if (MOB()) { layoutPhone(); return; }
-  const R = Math.max(560, 120 * G.length), RS = 240, RC = 180;
   G.forEach((g, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / G.length; pos['g:' + g.id] = { x: R * Math.cos(a), y: R * Math.sin(a), a }; });
   G.forEach(g => {
     const hub = pos['g:' + g.id], tops = topsOf(g), n = tops.length;
@@ -295,34 +305,85 @@ function layout() {
       kids(s, a, 1);
     });
   });
-  /* 폰(2026-11-14 오너 «겹침 발생») — 둥글게 놓으면 묶음끼리 부채꼴이 겹친다. 오너를 맨 위에 두고
-   * 묶음을 세로 줄기에 차례로 매단다. 세션은 묶음 오른쪽에 세로 송이로(가운데가 불룩한 활 모양),
-   * 위아래 간격 GAPY 는 별 + 세 줄 이름이 들어가는 높이. 묶음마다 자기 띠를 가져 서로 겹치지 않는다.
-   * 갈래는 부모 바로 뒤에 놓아 부모와 짧은 선으로 이어진다. 화면을 넘는 아래쪽은 끌어서 본다 */
-  function layoutPhone() {
-    const GAPY = 100, X0 = 118, BULGE = 56;
-    let y = 130;
-    G.forEach(g => {
-      const items = [], add = s => { items.push(s); S.filter(c => c.parent === s.id && c.g === g.id).forEach(add); };
-      topsOf(g).forEach(add);
-      S.filter(s => s.g === g.id && !items.includes(s)).forEach(s => items.push(s));
-      const n = items.length, half = Math.max((n - 1) * GAPY / 2, 40), cy = y + half + 30;
-      pos['g:' + g.id] = { x: 0, y: cy, a: 0 };
-      items.forEach((s, j) => {
-        const t = n > 1 ? j / (n - 1) * 2 - 1 : 0;
-        pos[s.id] = { x: X0 + BULGE * (1 - t * t), y: cy + (n > 1 ? t * half : 0), a: 0 };
-      });
-      y = cy + half + 90;
-    });
-  }
   function kids(p, a, depth) {
     S.filter(c => c.parent === p.id && c.g === p.g).forEach((c, k, arr) => {
       const ca = a + (k - (arr.length - 1) / 2) * .45;
-      pos[c.id] = { x: pos[p.id].x + RC * Math.cos(ca), y: pos[p.id].y + RC * Math.sin(ca), a: ca };  // PC 만
+      pos[c.id] = { x: pos[p.id].x + RC * Math.cos(ca), y: pos[p.id].y + RC * Math.sin(ca), a: ca };
       if (depth < 3) kids(c, ca, depth + 1);
     });
   }
   S.forEach(s => { if (!pos[s.id]) { const h = pos['g:' + s.g]; pos[s.id] = { x: h.x + 60, y: h.y + 300, a: h.a }; } });
+  // 살아 있는 별은 지금 자리 그대로 — 둥근 자리는 새 별의 출발점일 뿐이다
+  for (const k in pos) { const o = old[k]; if (o && k !== 'o') { pos[k].x = o.x; pos[k].y = o.y; } pos[k].vx = 0; pos[k].vy = 0; }
+}
+
+/* ───────── 힘 ───────── */
+let BOX = {}, NODE = {}, LINKS = [], alpha = 0, simOn = false, DRAGP = null;
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const parentKey = s => s.parent && pos[s.parent] && S.find(x => x.id === s.parent)?.g === s.g ? s.parent : 'g:' + s.g;
+function simStep() {
+  const ks = Object.keys(pos), m = MOB(), CHARGE = m ? 2500 : 6000;
+  for (const l of LINKS) {                                   // 용수철 — 선 길이를 제 길이로
+    const a = pos[l.a], b = pos[l.b]; if (!a || !b) continue;
+    let dx = b.x - a.x, dy = b.y - a.y; const d = Math.hypot(dx, dy) || 1, f = (d - l.len) / d * .1 * alpha;
+    dx *= f; dy *= f;
+    if (!a.fixed && a !== DRAGP) { a.vx += dx / 2; a.vy += dy / 2; }
+    if (!b.fixed && b !== DRAGP) { b.vx -= dx / 2; b.vy -= dy / 2; }
+  }
+  for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) {   // 서로 밀기
+    const a = pos[ks[i]], b = pos[ks[j]]; let dx = b.x - a.x, dy = b.y - a.y;
+    if (!dx && !dy) { dx = Math.random() - .5; dy = Math.random() - .5; }
+    const d2 = Math.max(dx * dx + dy * dy, 900), f = Math.min(CHARGE * alpha / d2, 30) / Math.sqrt(d2);
+    if (!a.fixed && a !== DRAGP) { a.vx -= dx * f; a.vy -= dy * f; }
+    if (!b.fixed && b !== DRAGP) { b.vx += dx * f; b.vy += dy * f; }
+  }
+  for (const k of ks) { const p = pos[k]; if (p.fixed || p === DRAGP) { p.vx = p.vy = 0; continue; } p.vx *= .58; p.vy *= .58; p.x += p.vx; p.y += p.vy; }
+  collide(2);
+}
+/** 별 + 이름 상자가 겹치면 덜 겹친 쪽(가로/세로)으로 바로 떼어 놓는다 — 힘이 아니라 규칙이다 */
+function collide(passes) {
+  const ks = Object.keys(pos), M = MOB() ? 10 : 16;
+  let any = false;
+  for (let n = 0; n < passes; n++) {
+    any = false;
+    for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) {
+      const A = pos[ks[i]], B = pos[ks[j]], a = BOX[ks[i]], b = BOX[ks[j]]; if (!a || !b) continue;
+      const dx = B.x - A.x, dy = B.y - A.y, ox = (a.w + b.w) / 2 + M - Math.abs(dx), oy = (a.h + b.h) / 2 + M - Math.abs(dy);
+      if (ox <= 0 || oy <= 0) continue;
+      any = true;
+      const la = A.fixed || A === DRAGP, lb = B.fixed || B === DRAGP, wa = la ? 0 : lb ? 1 : .5, wb = lb ? 0 : la ? 1 : .5;
+      if (ox < oy) { const s = dx >= 0 ? 1 : -1; A.x -= s * ox * wa; B.x += s * ox * wb; }
+      else { const s = dy >= 0 ? 1 : -1; A.y -= s * oy * wa; B.y += s * oy * wb; }
+    }
+    if (!any) break;
+  }
+  return any;
+}
+/** 그리기 전에 끝까지 푼다 — 처음 열 때 · 움직임 줄이기를 켠 기기 */
+function settle() {
+  alpha = 1; for (let i = 0; i < 320; i++) { simStep(); alpha *= .985; }
+  for (let i = 0; i < 40 && collide(10); i++);
+  alpha = 0; place();
+}
+function kick(a) {
+  if (REDUCE && !DRAGP) { settle(); return; }
+  alpha = Math.max(alpha, a);
+  if (!simOn) { simOn = true; requestAnimationFrame(loop); }
+}
+function loop() {
+  simStep(); alpha *= .965; place();
+  if (alpha > .008 || DRAGP) requestAnimationFrame(loop);
+  else { for (let i = 0; i < 40 && collide(10); i++); place(); simOn = false; }
+}
+function place() {
+  for (const k in NODE) { const p = pos[k]; if (!p) continue; NODE[k].style.left = p.x + 'px'; NODE[k].style.top = p.y + 'px'; }
+  for (const l of LINKS) {
+    const a = pos[l.a], b = pos[l.b]; if (!a || !b || !l.el) continue;
+    if (l.a === 'o') { l.el.setAttribute('d', `M${a.x} ${a.y} L${b.x} ${b.y}`); continue; }
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, cx = mx - (b.y - a.y) * .12, cy = my + (b.x - a.x) * .12;
+    l.el.setAttribute('d', `M${a.x} ${a.y} Q${cx} ${cy} ${b.x} ${b.y}`);
+  }
+  const rd = $('radial'); if (rd && !rd.hidden && cur && cur.k === 's' && pos[cur.id]) { rd.style.left = pos[cur.id].x + 'px'; rd.style.top = pos[cur.id].y + 'px'; }
 }
 
 /* ───────── 그리기 ───────── */
@@ -330,26 +391,35 @@ const world = $('world'), vp = $('vp');
 let focusG = null, filt = null, cur = null;
 function draw() {
   let L = '', N = '';
+  LINKS = [];
   G.forEach(g => {
-    const h = pos['g:' + g.id], list = S.filter(s => s.g === g.id), anyRun = list.some(s => s.st === 'run');
-    L += `<path data-grp="${g.id}" class="ln ${anyRun ? 'run' : ''}" d="M0 0 L${h.x} ${h.y}" stroke="${g.c}" stroke-opacity="${anyRun ? .75 : .3}" stroke-width="2" ${anyRun ? '' : 'stroke-dasharray="3 9"'}/>`;
+    const list = S.filter(s => s.g === g.id), anyRun = list.some(s => s.st === 'run');
+    LINKS.push({ a: 'o', b: 'g:' + g.id, len: LEN.g });
+    L += `<path data-grp="${g.id}" data-lk="${LINKS.length - 1}" class="ln ${anyRun ? 'run' : ''}" stroke="${g.c}" stroke-opacity="${anyRun ? .75 : .3}" stroke-width="2" ${anyRun ? '' : 'stroke-dasharray="3 9"'}/>`;
     const run = list.filter(s => s.st === 'run').length, w = list.filter(s => s.st === 'wait').length, oc = list.filter(s => openCmds(s.id).length).length;
-    N += `<button class="node ghub" data-g="${g.id}" data-grp="${g.id}" style="left:${h.x}px;top:${h.y}px;--c:${g.c}"><span class="orb">${esc(g.name)}</span>
+    N += `<button class="node ghub" data-g="${g.id}" data-grp="${g.id}" data-k="g:${g.id}" style="--c:${g.c}"><span class="orb">${esc(g.name)}</span>
       <span class="badges"><span class="bd">${list.length}</span>${run ? `<span class="bd run">▶ ${run}</span>` : ''}${w ? `<span class="bd q">? ${w}</span>` : ''}${oc ? `<span class="bd c">✉ ${oc}</span>` : ''}</span></button>`;
   });
   S.forEach(s => {
-    const p = pos[s.id], parent = s.parent && pos[s.parent] && S.find(x => x.id === s.parent)?.g === s.g ? pos[s.parent] : pos['g:' + s.g], g = gOf(s.g);
-    const mx = (parent.x + p.x) / 2, my = (parent.y + p.y) / 2, cx = mx - (p.y - parent.y) * .12, cy = my + (p.x - parent.x) * .12;
-    L += `<path data-grp="${s.g}" data-ls="${s.id}" class="ln ${s.st === 'run' ? 'run' : ''}" d="M${parent.x} ${parent.y} Q${cx} ${cy} ${p.x} ${p.y}" stroke="${s.st === 'wait' ? '#FFB36C' : g.c}" stroke-opacity="${s.st === 'idle' ? .28 : .85}" stroke-width="${s.st === 'idle' ? 1.2 : 2.2}"/>`;
+    const g = gOf(s.g), pk = parentKey(s);
+    LINKS.push({ a: pk, b: s.id, len: pk.startsWith('g:') ? LEN.s : LEN.c });
+    L += `<path data-grp="${s.g}" data-ls="${s.id}" data-lk="${LINKS.length - 1}" class="ln ${s.st === 'run' ? 'run' : ''}" stroke="${s.st === 'wait' ? '#FFB36C' : g.c}" stroke-opacity="${s.st === 'idle' ? .28 : .85}" stroke-width="${s.st === 'idle' ? 1.2 : 2.2}"/>`;
     const oc = openCmds(s.id).length, sz = MOB() ? (s.st === 'idle' ? 42 : 48) : s.st === 'run' ? 54 : s.st === 'wait' ? 48 : 38;
     const ic = s.st === 'wait' ? '?' : oc ? '✉' : s.st === 'run' ? '▶' : '';
-    N += `<button class="node sess st-${s.st}" data-s="${s.id}" data-grp="${s.g}" style="left:${p.x}px;top:${p.y}px;--c:${g.c};--sz:${sz}px">
+    N += `<button class="node sess st-${s.st}" data-s="${s.id}" data-grp="${s.g}" data-k="${s.id}" style="--c:${g.c};--sz:${sz}px">
       <span class="orb">${ic}</span><span class="lb">${esc(s.title)}</span><span class="sm">${stTxt[s.st]} · ${ago(s.last)}</span></button>`;
   });
-  N += `<button class="node hub" data-o="1" style="left:0;top:0"><span class="orb">오너</span><span class="sm">누르면 페이(PA)에게 맡기기</span></button>`;
+  N += `<button class="node hub" data-o="1" data-k="o"><span class="orb">오너</span><span class="sm">누르면 페이(PA)에게 맡기기</span></button>`;
   const rd = $('radial'), keep = rd && !rd.hidden ? rd.outerHTML : '<div class="radial" id="radial" hidden></div>';
   world.innerHTML = `<div class="sky"></div><svg class="links" width="1" height="1">${L}</svg>${N}${keep}`;
-  applyDim(); markSel();
+  // 별마다 화면에 실제로 차지하는 상자(별 + 이름)를 잰다 — 겹침은 이 상자로 막는다
+  // 탭이 가려져 있으면 잴 수 없다(0) — 그때는 지난번 잰 값을 쓴다
+  NODE = {}; const nb = {};
+  world.querySelectorAll('.node[data-k]').forEach(el => { const k = el.dataset.k; NODE[k] = el; const w = Math.max(0, ...[...el.children].map(c => c.offsetWidth)); nb[k] = w ? { w, h: el.offsetHeight } : BOX[k]; });   // 칸 폭이 아니라 글이 실제로 차지하는 폭
+  BOX = nb;
+  world.querySelectorAll('path[data-lk]').forEach(el => { LINKS[+el.dataset.lk].el = el; });
+  if (DRAGP) { const k = Object.keys(pos).find(k => pos[k] === DRAGP); if (NODE[k]) NODE[k].classList.add('drag'); }
+  place(); applyDim(); markSel();
 }
 function applyDim() {
   world.querySelectorAll('[data-grp]').forEach(el => {
@@ -395,35 +465,79 @@ function renderUsage() {
 
 /* ───────── 끌기 · 확대 ───────── */
 let T = { x: 0, y: 0, k: 1 }; const minK = .12, maxK = 2.2;
-function apply() { world.style.transform = `translate(${T.x}px,${T.y}px) scale(${T.k})`; $('lv').textContent = Math.round(T.k * 100) + '%'; vp.dataset.far = T.k < (MOB() ? .3 : .5) ? '1' : '0'; world.style.setProperty('--inv', (1 / T.k).toFixed(3)); }
+function apply() { world.style.transform = `translate(${T.x}px,${T.y}px) scale(${T.k})`; $('lv').textContent = Math.round(T.k * 100) + '%'; vp.dataset.far = T.k < .3 ? '1' : '0'; world.style.setProperty('--inv', (1 / T.k).toFixed(3)); }
 function zoomAt(px, py, k2) { k2 = Math.max(minK, Math.min(maxK, k2)); T.x = px - (px - T.x) * k2 / T.k; T.y = py - (py - T.y) * k2 / T.k; T.k = k2; apply(); }
 vp.addEventListener('wheel', e => { e.preventDefault(); world.classList.remove('fly'); zoomAt(e.clientX, e.clientY, T.k * Math.exp(-e.deltaY * .0015)); }, { passive: false });
 const ptrs = new Map(); let pinch = null, moved = false;
+/* 별 끌어 옮기기 — 마우스는 누른 채 움직이면, 손가락은 꾹(0.32초) 누른 뒤 움직이면. 끄는 동안 이웃이 따라 움직인다.
+ * 손가락으로 누르자마자 움직이면 별자리 전체를 옮기는 것으로 본다. 오너 별은 가운데 고정이라 끌지 않는다 */
+let press = null, dragged = false;
+const toWorld = (cx, cy) => ({ x: (cx - T.x) / T.k, y: (cy - T.y) / T.k });
+function startDrag() {
+  const p = pos[press.key]; if (!p || p.fixed) { press = null; return; }
+  press.mode = 'drag'; DRAGP = p;
+  const w = toWorld(press.cx, press.cy); press.ox = p.x - w.x; press.oy = p.y - w.y;
+  NODE[press.key]?.classList.add('drag'); closeRadial();
+  try { vp.setPointerCapture(press.id); } catch (_) {}
+  if (press.touch && navigator.vibrate) navigator.vibrate(12);
+  kick(.35);
+}
+function endPress() {
+  if (!press) return; clearTimeout(press.timer);
+  if (press.mode === 'drag') { NODE[press.key]?.classList.remove('drag'); DRAGP = null; dragged = true; kick(.3); }
+  press = null;
+}
+vp.addEventListener('contextmenu', e => { if (e.target.closest('.node')) e.preventDefault(); });
 vp.addEventListener('pointerdown', e => {
-  moved = false; if (e.target.closest('button,a')) return;
-  world.classList.remove('fly'); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); vp.setPointerCapture(e.pointerId); vp.classList.add('drag');
+  moved = false;
+  if (e.target.closest('.radial')) return;
+  const nd = e.target.closest('.node');
+  if (press && press.mode !== 'drag') endPress();           // 두 번째 손가락 — 끌기 대신 두 손가락 확대
+  if (nd && !ptrs.size) {
+    press = { key: nd.dataset.k, id: e.pointerId, x0: e.clientX, y0: e.clientY, cx: e.clientX, cy: e.clientY, mode: e.pointerType === 'mouse' ? 'maybe' : 'wait', touch: e.pointerType === 'touch' };
+    if (press.mode === 'wait') press.timer = setTimeout(() => { if (press && press.mode === 'wait') startDrag(); }, 320);
+    if (e.pointerType === 'mouse') return;                  // 마우스로 별을 누르면 끌기나 누르기 — 화면 옮기기는 아니다
+  } else if (nd && e.pointerType === 'mouse') return;
+  world.classList.remove('fly'); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (!nd) { vp.setPointerCapture(e.pointerId); vp.classList.add('drag'); }
   if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), k: T.k }; }
 });
 vp.addEventListener('pointermove', e => {
+  if (press && press.id === e.pointerId) {
+    press.cx = e.clientX; press.cy = e.clientY;
+    const far = Math.hypot(e.clientX - press.x0, e.clientY - press.y0);
+    if (press.mode === 'maybe' && far > 4) startDrag();
+    if (press && press.mode === 'drag') { const w = toWorld(e.clientX, e.clientY); DRAGP.x = w.x + press.ox; DRAGP.y = w.y + press.oy; kick(.3); return; }
+    if (press && press.mode === 'wait') { if (far > 8) endPress(); else return; }
+    if (press && press.mode === 'maybe') return;
+  }
   if (!ptrs.has(e.pointerId)) return; const p = ptrs.get(e.pointerId), dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
   if (ptrs.size === 2 && pinch) { const [a, b] = [...ptrs.values()]; zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, pinch.k * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d); return; }
   if (Math.abs(dx) + Math.abs(dy) > 2) moved = true; T.x += dx; T.y += dy; apply();
 });
-const end = e => { if (ptrs.has(e.pointerId) && !moved && ptrs.size === 1) closeRadial(); ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (!ptrs.size) vp.classList.remove('drag'); };
+const end = e => {
+  if (press && press.id === e.pointerId) endPress();
+  if (ptrs.has(e.pointerId) && !moved && ptrs.size === 1 && !e.target.closest('.node')) closeRadial();
+  ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (!ptrs.size) vp.classList.remove('drag');
+};
 vp.addEventListener('pointerup', end); vp.addEventListener('pointercancel', end);
 $('zi').onclick = () => { world.classList.add('fly'); zoomAt(innerWidth / 2, innerHeight / 2, T.k * 1.35); };
 $('zo').onclick = () => { world.classList.add('fly'); zoomAt(innerWidth / 2, innerHeight / 2, T.k / 1.35); };
 $('zf').onclick = () => focusGroup(null);
-function boundsOf(keys, pad) { const ps = keys.map(k => pos[k] || { x: 0, y: 0 }); const x = Math.min(0, ...ps.map(p => p.x)) - pad, y = Math.min(0, ...ps.map(p => p.y)) - pad; return { x, y, w: Math.max(0, ...ps.map(p => p.x)) + pad - x, h: Math.max(0, ...ps.map(p => p.y)) + pad + 40 - y }; }
-const allBounds = () => ({ ...boundsOf(Object.keys(pos), MOB() ? 40 : 110), all: true });
-const groupBounds = id => { const ks = ['g:' + id, ...S.filter(s => s.g === id).map(s => s.id)]; const ps = ks.map(k => pos[k]), a = MOB() ? 56 : 120, b = MOB() ? 76 : 160; const x = Math.min(...ps.map(p => p.x)) - a, y = Math.min(...ps.map(p => p.y)) - a; return { x, y, w: Math.max(...ps.map(p => p.x)) + a - x, h: Math.max(...ps.map(p => p.y)) + b - y }; };
+// 별 자리에 별 + 이름 상자 크기까지 넣어 잰다 — 가장자리 별의 이름이 화면 밖으로 나가지 않게
+function boundsOf(keys, pad) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const k of keys) { const p = pos[k]; if (!p) continue; const b = BOX[k] || { w: 0, h: 0 }; x0 = Math.min(x0, p.x - b.w / 2); x1 = Math.max(x1, p.x + b.w / 2); y0 = Math.min(y0, p.y - b.h / 2); y1 = Math.max(y1, p.y + b.h / 2); }
+  if (x0 === Infinity) { x0 = y0 = -100; x1 = y1 = 100; }
+  return { x: x0 - pad, y: y0 - pad, w: x1 - x0 + pad * 2, h: y1 - y0 + pad * 2 };
+}
+const allBounds = () => boundsOf(Object.keys(pos), MOB() ? 16 : 40);
+const groupBounds = id => boundsOf(['g:' + id, ...S.filter(s => s.g === id).map(s => s.id)], MOB() ? 16 : 40);
 function fit(r, anim) {
   const top = $('top').offsetHeight + 16, bottom = $('groups').offsetHeight + 34, side = 24, rp = $('panel').classList.contains('open') && innerWidth > 700 ? 410 : 0;
   const vw = innerWidth - side * 2 - rp, vh = innerHeight - top - bottom;
   T.k = Math.max(minK, Math.min(1.3, Math.min(vw / r.w, vh / r.h)));
-  // 폰의 전체 보기는 세로로 긴 줄기 — 폭에 맞추고 맨 위(오너)부터 보이게 둔다, 아래는 끌어서 본다
-  if (MOB() && r.all) T.k = Math.max(minK, Math.min(1.1, vw / r.w));
-  T.x = side + (vw - r.w * T.k) / 2 - r.x * T.k; T.y = MOB() && r.all && r.h * T.k > vh ? top - r.y * T.k : top + (vh - r.h * T.k) / 2 - r.y * T.k;
+  T.x = side + (vw - r.w * T.k) / 2 - r.x * T.k; T.y = top + (vh - r.h * T.k) / 2 - r.y * T.k;
   world.classList.toggle('fly', !!anim); apply();
 }
 
@@ -572,7 +686,7 @@ $('pb').addEventListener('click', async e => {
 function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3200); }
 
 world.addEventListener('click', e => {
-  if (moved) return;
+  if (moved || dragged) { dragged = false; return; }   // 끌어 옮긴 뒤 손을 뗀 것은 누르기가 아니다
   const ra = e.target.closest('[data-ra]'); if (ra) { closeRadial(); openSession(ra.dataset.rid); if (ra.textContent === '지시하기') $('msg').focus(); return; }
   // 폰은 둥근 메뉴 대신 바로 아래 카드 — 손가락으로 작은 메뉴를 다시 누르지 않게
   const s = e.target.closest('[data-s]'); if (s) { if (MOB()) { openSession(s.dataset.s); return; } cur = { k: 's', id: s.dataset.s }; markSel(); openRadial(s.dataset.s); return; }
@@ -585,7 +699,7 @@ let wasMob = MOB();
 addEventListener('resize', () => {
   if (!Object.keys(pos).length) return;
   // 폰 ↔ PC 폭을 넘나들면 배치(세로로 길게 / 둥글게)를 다시 한다
-  if (MOB() !== wasMob) { wasMob = MOB(); layout(); layoutSig = ''; draw(); }
+  if (MOB() !== wasMob) { wasMob = MOB(); layout(); layoutSig = ''; draw(); settle(); }
   fit(focusG ? groupBounds(focusG) : allBounds(), false);
 });
 </script>
