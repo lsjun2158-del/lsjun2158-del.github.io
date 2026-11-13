@@ -28,8 +28,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 a{color:var(--cyan)}
 
 .top{position:fixed;inset:0 0 auto 0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:10px 16px;background:rgba(11,15,20,.92);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
-.brand{font:600 12px var(--mono);letter-spacing:.14em;color:var(--muted);white-space:nowrap;text-decoration:none}
-.brand:hover{color:var(--text)}
+/* 관리 화면 탭 줄 — HQ · Solo Climbing 과 같은 줄 (2026-11-13 오너) */
+nav.site{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:2px 20px;margin:-10px -16px 4px;padding:0 16px;border-bottom:1px solid var(--line)}
+nav.site a{display:inline-flex;align-items:center;min-height:40px;margin-bottom:-1px;font:700 14px/1.25 var(--sans);color:var(--muted);text-decoration:none;border-bottom:2px solid transparent}
+nav.site a:hover{color:var(--text)}
+nav.site a[aria-current=page]{color:var(--text);border-bottom-color:var(--cyan)}
 .stat{display:flex;flex-wrap:wrap;gap:6px}
 .stat button{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);font-size:13px;color:var(--muted)}
 .stat button b{font:600 14px var(--mono);color:var(--text)}
@@ -98,7 +101,7 @@ svg.links{position:absolute;overflow:visible;pointer-events:none;left:0;top:0}
 .zoom button{width:36px;height:36px;border-radius:9px;background:var(--glass);border:1px solid var(--line);font:600 16px var(--mono)}
 .zoom .lv{font:500 10px var(--mono);text-align:center;color:var(--muted)}
 
-.panel{position:fixed;right:16px;top:var(--topH,64px);bottom:72px;z-index:25;width:390px;max-width:calc(100vw - 32px);display:flex;flex-direction:column;background:var(--glass);border:1px solid var(--line2);border-radius:14px;backdrop-filter:blur(14px);transform:translateX(calc(100% + 24px));transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.panel{position:fixed;right:16px;top:calc(var(--topH,64px) + 10px);bottom:72px;z-index:25;width:390px;max-width:calc(100vw - 32px);display:flex;flex-direction:column;background:var(--glass);border:1px solid var(--line2);border-radius:14px;backdrop-filter:blur(14px);transform:translateX(calc(100% + 24px));transition:transform .3s cubic-bezier(.2,.8,.2,1)}
 .panel.open{transform:none}
 .ph{padding:16px 18px 12px;border-bottom:1px solid var(--line)}
 .gp{font:600 11px var(--mono);letter-spacing:.1em;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;gap:6px}
@@ -141,7 +144,7 @@ textarea:focus{outline:none;border-color:var(--cyan)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .empty{position:fixed;inset:0;display:grid;place-items:center;color:var(--muted);font-size:14px;pointer-events:none}
 
-#gate{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#gate{position:fixed;inset:var(--topH,64px) 0 0 0;z-index:28;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
 #gate .box{max-width:360px;width:100%;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:28px 24px;text-align:center}
 #gate b{display:block;font:700 15px var(--mono);letter-spacing:.14em}
 #gate button{margin-top:22px;width:100%;padding:11px 14px;border-radius:7px;background:var(--cyan);color:#041016;font-weight:700}
@@ -150,11 +153,10 @@ textarea:focus{outline:none;border-color:var(--cyan)}
 </style>
 </head>
 <body>
-<div id="gate"><div class="box"><b>WMW · 세션 별자리</b><button id="login">Google 로 로그인</button><p id="gateMsg">오너 계정만 열립니다.</p></div></div>
+<div id="gate"><div class="box"><b>WMW · 세션 별자리</b><p id="gateMsg">로그인 확인 중…</p></div></div>
 
 <div class="top" id="top">
-  <a class="brand" href="../">← HQ</a>
-  <span class="brand">세션 별자리</span>
+  <nav class="site" aria-label="관리 화면"><a href="/admin/">HQ</a><a href="/admin/soloclimbing/">Solo Climbing</a><a href="/admin/sessions/" aria-current="page">세션 별자리</a></nav>
   <div class="stat" id="stat"></div>
   <div class="use" id="use"></div>
   <span class="relay" id="relay"><i></i><span>PC 중계 확인 중</span></span>
@@ -194,13 +196,12 @@ const CONFIG = {
   appId: "1:953566283020:web:b8b505a01ff9d90870f529"
 };
 const app = firebase.initializeApp(CONFIG), auth = app.auth(), fs = app.firestore();
-const provider = new firebase.auth.GoogleAuthProvider(); provider.setCustomParameters({ prompt: 'select_account' });
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-$('login').onclick = () => auth.signInWithPopup(provider).catch(e => { if (/popup/.test(e.code || '')) auth.signInWithRedirect(provider); else $('gateMsg').textContent = '로그인하지 못했습니다: ' + (e.code || e.message); });
+// 로그인은 /admin 에서 한 번 (2026-11-13 오너) — 여기는 같은 wmw-hq 기본 앱이라 HQ 로그인을 그대로 받는다
 auth.onAuthStateChanged(u => {
-  if (!u) { $('gate').style.display = 'flex'; return; }
+  if (!u) { location.replace('/admin/?next=/admin/sessions/'); return; }
   fs.doc('feed/sessions').onSnapshot(s => { $('gate').style.display = 'none'; onFeed(s.exists ? s.data() : null); },
     e => { $('gateMsg').textContent = e.code === 'permission-denied' ? '이 계정은 열 수 없습니다 (오너 계정만).' : '읽지 못했습니다: ' + e.message; $('gate').style.display = 'flex'; });
   fs.doc('feed/usage').onSnapshot(s => { USAGE = s.exists ? s.data() : null; renderUsage(); }, () => {});
@@ -454,7 +455,8 @@ world.addEventListener('click', e => {
   const g = e.target.closest('[data-g]'); if (g) { openGroup(g.dataset.g); return; }
   if (e.target.closest('[data-o]')) openOwner();
 });
-document.documentElement.style.setProperty('--topH', $('top').offsetHeight + 10 + 'px');
+const setTopH = () => document.documentElement.style.setProperty('--topH', $('top').offsetHeight + 'px');
+setTopH(); new ResizeObserver(setTopH).observe($('top'));
 addEventListener('resize', () => { if (Object.keys(pos).length) fit(focusG ? groupBounds(focusG) : allBounds(), false); });
 </script>
 </body>

@@ -153,7 +153,7 @@ main.wide{max-width:1600px}
 .hint code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--raised);padding:2px 6px;border-radius:5px;overflow-wrap:anywhere}
 </style></head><body>
 <main>
- <nav class="site" aria-label="관리 화면"><a href="/admin/">HQ</a><a href="/admin/soloclimbing/" aria-current="page">Solo Climbing</a></nav>
+ <nav class="site" aria-label="관리 화면"><a href="/admin/">HQ</a><a href="/admin/soloclimbing/" aria-current="page">Solo Climbing</a><a href="/admin/sessions/">세션 별자리</a></nav>
  <div class="top"><p class="tag"><i aria-hidden="true"></i>[ 관리자 ]</p><div class="who" id="who" hidden><span id="who-n">관리자로 로그인됨</span><button type="button" id="out">로그아웃</button></div></div>
 
  <div class="tabs" id="tabs" role="tablist" hidden>
@@ -164,9 +164,8 @@ main.wide{max-width:1600px}
  <section class="gate" id="gate">
   <div class="box">
    <span class="lk" aria-hidden="true"></span>
-   <b>오너만 볼 수 있어요</b>
-   <p>오너 구글 계정으로 로그인하면 문의함이 열려요. 다른 계정은 읽기가 막혀 있어요.</p>
-   <button type="button" class="gbtn" id="in"><b>G</b>구글로 로그인</button>
+   <b>로그인을 확인하고 있어요</b>
+   <p>로그인은 <a href="/admin/" style="color:var(--accent)">관리 입구</a>에서 한 번만 해요. 로그인이 안 돼 있으면 그리로 넘어가요.</p>
    <p class="msg" id="gate-msg" role="alert" hidden></p>
   </div>
  </section>
@@ -201,17 +200,17 @@ let 실시간 = null, unsubLive = null;
 let 받는중 = false, 실시간탈 = null;
 const show = (el, m) => { el.textContent = m; el.hidden = !m; };
 
-if (!C) { show($('gate-msg'), 'Firebase 설정이 아직 들어가지 않았어요.'); $('in').disabled = true; }
+// 로그인은 관리 입구(/admin/)에서 한 번만 한다(2026-11-13 오너). 거기서 같은 Google 증표로
+// solo-climbing 에도 앱 이름 'sc' 로 로그인해 두므로, 이 화면은 그 로그인을 이어받기만 한다
+const 입구로 = (q) => location.replace('/admin/?' + q);
+if (!C) { show($('gate-msg'), 'Firebase 설정이 아직 들어가지 않았어요.'); }
 else {
   const appM = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
   const authM = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
   const fsM = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
-  const app = appM.initializeApp(C), auth = authM.getAuth(app), db = fsM.getFirestore(app);
-  const prov = new authM.GoogleAuthProvider(); prov.setCustomParameters({ prompt: 'select_account' });
-  // 로그인 — 팝업이 막히는 폰에서는 넘겨서 로그인
-  $('in').onclick = async () => { show($('gate-msg'), ''); try { await authM.signInWithPopup(auth, prov); } catch (e) { if (/popup/.test(e.code || '')) authM.signInWithRedirect(auth, prov); else show($('gate-msg'), '로그인하지 못했어요. 다시 눌러 주세요.'); } };
-  $('out').onclick = () => authM.signOut(auth);
-  authM.getRedirectResult(auth).catch(() => {});
+  const app = appM.initializeApp(C, 'sc'), auth = authM.getAuth(app), db = fsM.getFirestore(app);
+  // 로그아웃도 입구에서 — HQ 와 Solo Climbing 이 한 번에 풀린다
+  $('out').onclick = () => 입구로('logout=1');
   // 대시보드 자료 — 이 PC 의 stats/collect.js 가 하루 한 번 쓴다. 읽기는 한 번뿐이다(실시간 아님)
   통계읽기 = async () => {
     통계상태 = '읽는중'; 뷰();
@@ -228,7 +227,8 @@ else {
   authM.onAuthStateChanged(auth, user => {
     if (unsub) { unsub(); unsub = null; }
     if (unsubLive) { unsubLive(); unsubLive = null; }
-    if (!user) { 로그인 = false; 통계 = null; 실시간 = null; 통계상태 = '아직'; $('who').hidden = true; 뷰(); return; }
+    // 입구는 /admin/ 아래 경로만 받는다(해시 #대시보드 는 못 싣는다 — 돌아오면 문의함부터)
+    if (!user) { 입구로('next=' + encodeURIComponent(location.pathname)); return; }
     $('who').hidden = false;
     로그인 = true; 뷰();
     통계읽기();
@@ -242,10 +242,9 @@ else {
       items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       로그인 = true; 뷰(); render();
     }, e => {
-      // 오너 계정이 아니면 규칙이 읽기를 막는다
-      $('box').hidden = true; $('gate').hidden = false;
-      show($('gate-msg'), e.code === 'permission-denied' ? '이 계정은 문의함을 볼 수 없어요. 오너 계정으로 다시 로그인해 주세요.' : '문의를 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.');
-      authM.signOut(auth);
+      // 오너 계정이 아니면 규칙이 읽기를 막는다. 여기서 로그아웃하면 입구와 오가며 돌 수 있어 알리기만 한다
+      로그인 = false; 뷰();
+      show($('gate-msg'), e.code === 'permission-denied' ? '이 계정은 문의함을 볼 수 없어요. 관리 입구에서 로그아웃한 뒤 오너 계정으로 다시 로그인해 주세요.' : '문의를 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.');
     });
   });
   // 실시간 숫자 받아 오기 — 2026-11-11 부터 저절로 돌지 않는다(오너 결정). 누를 때만 받는다.

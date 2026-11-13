@@ -29,6 +29,53 @@
   var provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
 
+  /*
+   * 로그인은 /admin 에서 한 번 (2026-11-13 오너) — 같은 Google 로그인으로 Solo Climbing(solo-climbing 프로젝트)도 연다.
+   * 앱 이름이 'sc' 여야 SC 대시보드(모듈 SDK, 같은 이름)가 저장된 로그인을 그대로 받는다.
+   * solo-climbing 쪽은 wmw-hq 웹 클라이언트를 «외부 프로젝트 클라이언트 ID» 로 허용해 두었다(1_공개 홈페이지, 11-13).
+   *   ?next=/admin/...  로그인이 끝나면 그리로 (다른 곳은 받지 않는다)
+   *   ?logout=1         두 곳 모두 로그아웃
+   */
+  var SC_CONFIG = {
+    apiKey: "AIzaSyBT2706pHuJZNlCb_eXFR86dBj1q7E1HDg",
+    authDomain: "solo-climbing.firebaseapp.com",
+    projectId: "solo-climbing",
+    storageBucket: "solo-climbing.firebasestorage.app",
+    messagingSenderId: "237692887773",
+    appId: "1:237692887773:web:7167f357e7f6100e01b134"
+  };
+  var scAuth = firebase.initializeApp(SC_CONFIG, "sc").auth();
+  var qs = new URLSearchParams(location.search);
+  var NEXT = (function (n) { return n && /^\/admin\/[A-Za-z0-9_\-\/]*$/.test(n) && n.indexOf("//") < 0 ? n : null; })(qs.get("next"));
+  var LOGOUT = qs.get("logout") === "1";
+  var scReady = new Promise(function (r) { var off = scAuth.onAuthStateChanged(function () { off(); r(); }); });
+
+  /** Google 로그인 결과의 idToken 으로 Solo Climbing 에도 로그인 */
+  function linkSc(result) {
+    var tok = result && result.credential && result.credential.idToken;
+    if (!tok) return Promise.resolve(false);
+    return scAuth.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(tok))
+      .then(function () { return true; }, function () { return false; });
+  }
+  var linking = Promise.resolve(); // 팝업 로그인 뒤 sc 이어 붙이기가 끝날 때까지 다음 화면으로 넘기지 않는다
+  function signIn() {
+    msg("로그인 창을 여는 중…");
+    // 이미 wmw-hq 에 로그인된 채(같은 계정) 다시 로그인하면 onAuthStateChanged 가 다시 불리지 않는다
+    // → sc 를 이어 붙인 뒤 처리 흐름을 직접 한 번 더 돈다 (1_공개 홈페이지 검토, 11-13)
+    var had = !!auth.currentUser;
+    return linking = auth.signInWithPopup(provider).then(function (res) {
+      return linkSc(res).then(function (ok) { if (had && auth.currentUser) setTimeout(function () { onUser(auth.currentUser); }, 0); return ok; });
+    }, function (err) {
+      var c = err && err.code || "";
+      if (/popup-blocked|popup-closed|cancelled-popup|operation-not-supported/.test(c)) return auth.signInWithRedirect(provider);
+      msg("로그인하지 못했습니다. 다시 눌러 주세요.", true);
+    });
+  }
+  function signOutAll() {
+    try { localStorage.removeItem(LOCAL_KEY); } catch (e) {}
+    return Promise.all([auth.signOut(), scAuth.signOut()]).catch(function () {});
+  }
+
   /* ---------- 로그인 문 ---------- */
   var css = document.createElement("style");
   css.textContent =
@@ -45,23 +92,32 @@
 
   var gate = document.createElement("div");
   gate.id = "hqGate";
+  // 처음에는 «확인 중» 만 — 로그인 단추는 로그인이 없다고 확인된 뒤에 보인다(번쩍임 방지)
   gate.innerHTML = '<div class="box"><b>WELMAWORLD</b><span class="s">Headquarters</span>' +
-    '<button type="button" id="hqIn">Google 로 로그인</button>' +
-    '<p id="hqMsg">오너 계정으로만 열립니다.</p></div>';
+    '<button type="button" id="hqIn" hidden>Google 로 로그인</button>' +
+    '<p id="hqMsg">로그인 확인 중…</p></div>';
   function mountGate() { if (!gate.isConnected) document.body.appendChild(gate); }
   function msg(t, err) { var m = document.getElementById("hqMsg"); if (m) { m.textContent = t; m.className = err ? "err" : ""; } }
+  function askLogin(t, err) { mountGate(); var b = document.getElementById("hqIn"); if (b) b.hidden = false; msg(t, err); }
   if (document.body) mountGate(); else document.addEventListener("DOMContentLoaded", mountGate);
 
   gate.addEventListener("click", function (e) {
-    if (e.target && e.target.id === "hqIn") {
-      msg("로그인 창을 여는 중…");
-      auth.signInWithPopup(provider).catch(function (err) {
-        var c = err && err.code || "";
-        if (/popup-blocked|popup-closed|cancelled-popup|operation-not-supported/.test(c)) auth.signInWithRedirect(provider);
-        else msg("로그인하지 못했습니다. 다시 눌러 주세요.", true);
-      });
-    }
+    if (e.target && e.target.id === "hqIn") signIn();
   });
+
+  /* 이 변경 전에 로그인해 Solo Climbing 이 비어 있으면 한 번만 알린다 */
+  function offerScOnce() {
+    var KEY = "wmw-sc-link-asked";
+    try { if (localStorage.getItem(KEY)) return; localStorage.setItem(KEY, "1"); } catch (e) {}
+    var bar = document.createElement("div");
+    bar.style.cssText = "position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:120;max-width:calc(100vw - 32px);display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:var(--raised,#131019);border:1px solid var(--accent-line,rgba(130,87,255,.34));font-size:13px;color:var(--text,#ECE8F2)";
+    bar.innerHTML = '<span>Solo Climbing 까지 함께 열려면 한 번 더 로그인해 주세요.</span>' +
+      '<button type="button" style="padding:6px 12px;border-radius:6px;background:var(--accent,#8257FF);color:#fff;font-weight:600">로그인</button>' +
+      '<button type="button" style="color:var(--muted,#877F97)">나중에</button>';
+    bar.children[1].onclick = function () { bar.remove(); signIn(); };
+    bar.children[2].onclick = function () { bar.remove(); };
+    document.body.appendChild(bar);
+  }
 
   function addSignOut() {
     var foot = document.querySelector(".rail-foot");
@@ -69,42 +125,63 @@
     var b = document.createElement("button");
     b.id = "hqOut"; b.type = "button"; b.textContent = "로그아웃";
     b.addEventListener("click", function () {
-      try { localStorage.removeItem(LOCAL_KEY); } catch (e) {}
-      auth.signOut().then(function () { location.reload(); });
+      signOutAll().then(function () { location.replace("/admin/"); });
     });
     foot.appendChild(b);
-    // 관리 입구(/admin) 의 다른 화면 — Solo Climbing 대시보드
-    var sc = document.createElement("a");
-    sc.href = "/admin/soloclimbing/"; sc.textContent = "Solo Climbing 대시보드 →";
-    sc.style.cssText = "font-family:var(--mono,monospace);font-size:10.5px;color:var(--accent-soft,#B79CFF);text-decoration:none";
-    foot.insertBefore(sc, foot.firstChild);
-    // 세션 별자리 — 세션을 보고 지시를 보내는 화면 (relay.js 가 이 PC 에서 받아 넣는다)
-    var ss = document.createElement("a");
-    ss.href = "/admin/sessions/"; ss.textContent = "세션 별자리 →";
-    ss.style.cssText = sc.style.cssText;
-    foot.insertBefore(ss, foot.firstChild);
   }
+
+  /* ---------- 관리 화면 탭 줄 — HQ | Solo Climbing | 세션 별자리 (세 화면 같은 줄, 2026-11-13 오너) ---------- */
+  var tabCss = document.createElement("style");
+  tabCss.textContent =
+    "nav.site{position:sticky;top:0;z-index:101;display:flex;flex-wrap:wrap;gap:2px 20px;padding:0 22px;background:var(--bg,#000);border-bottom:1px solid var(--line,#241F30)}" +
+    "nav.site a{display:inline-flex;align-items:center;min-height:40px;margin-bottom:-1px;font:700 14px/1.25 var(--sans,sans-serif);color:var(--muted,#877F97);text-decoration:none;border-bottom:2px solid transparent}" +
+    "nav.site a:hover{color:var(--text,#ECE8F2)}" +
+    "nav.site a[aria-current=page]{color:var(--text,#ECE8F2);border-bottom-color:var(--accent,#8257FF)}" +
+    // 화면 CSS(index.html)가 이 뒤에 오므로 body 를 붙여 이긴다
+    "body #hqGate{top:var(--siteH,41px)}" +
+    "body .flow-toolbar{top:var(--siteH,41px)}" +
+    "@media (min-width:881px){body .rail{top:var(--siteH,41px);height:calc(100vh - var(--siteH,41px))}}";
+  document.head.appendChild(tabCss);
+  function mountTabs() {
+    if (document.querySelector("nav.site")) return;
+    var nav = document.createElement("nav");
+    nav.className = "site"; nav.setAttribute("aria-label", "관리 화면");
+    nav.innerHTML = '<a href="/admin/" aria-current="page">HQ</a><a href="/admin/soloclimbing/">Solo Climbing</a><a href="/admin/sessions/">세션 별자리</a>';
+    document.body.insertBefore(nav, document.body.firstChild);
+    var fit = function () { document.documentElement.style.setProperty("--siteH", nav.offsetHeight + "px"); };
+    fit(); if (window.ResizeObserver) new ResizeObserver(fit).observe(nav); else window.addEventListener("resize", fit);
+  }
+  if (document.body) mountTabs(); else document.addEventListener("DOMContentLoaded", mountTabs);
 
   /* ---------- 오너 확인 뒤에만 db 를 건넨다 ---------- */
   var resolveDb;
   var dbReady = new Promise(function (r) { resolveDb = r; });
-  auth.getRedirectResult().catch(function () {});
-  auth.onAuthStateChanged(function (user) {
-    if (!user) { mountGate(); msg("오너 계정으로만 열립니다."); return; }
-    msg("확인하는 중…");
-    // 규칙이 막으면 오너가 아니다 — 페이지 쪽에서 이메일을 비교하지 않는다(규칙이 정본)
-    fs.doc("feed/meta").get().then(function () {
-      gate.remove();
-      addSignOut();
-      resolveDb(fs);
-    }, function (err) {
-      var denied = err && err.code === "permission-denied";
-      try { localStorage.removeItem(LOCAL_KEY); } catch (e) {}
-      auth.signOut();
-      mountGate();
-      msg(denied ? "이 계정은 볼 수 없습니다. 오너 계정으로 다시 로그인해 주세요." : "저장소에 닿지 못했습니다. 잠시 뒤 다시 시도해 주세요.", true);
-    });
-  });
+  var started = LOGOUT
+    ? signOutAll().then(function () { history.replaceState(null, "", "/admin/"); })
+    : auth.getRedirectResult().then(linkSc, function () {});
+  started.then(function () { auth.onAuthStateChanged(onUser); });
+  function onUser(user) {
+      if (!user) { askLogin(LOGOUT ? "로그아웃했습니다." : "오너 계정으로만 열립니다."); return; }
+      msg("확인하는 중…");
+      // 규칙이 막으면 오너가 아니다 — 페이지 쪽에서 이메일을 비교하지 않는다(규칙이 정본)
+      fs.doc("feed/meta").get().then(function () {
+        return Promise.all([scReady, linking]).then(function () {
+          if (NEXT) {
+            // 다른 관리 화면에서 넘어왔다 — Solo Climbing 은 sc 로그인이 있어야 열린다
+            if (/^\/admin\/soloclimbing/.test(NEXT) && !scAuth.currentUser) { askLogin("Solo Climbing 까지 함께 열려면 한 번 더 로그인해 주세요."); return; }
+            location.replace(NEXT); return;
+          }
+          gate.remove();
+          addSignOut();
+          resolveDb(fs);
+          if (!scAuth.currentUser) offerScOnce();
+        });
+      }, function (err) {
+        var denied = err && err.code === "permission-denied";
+        signOutAll();
+        askLogin(denied ? "이 계정은 볼 수 없습니다. 오너 계정으로 다시 로그인해 주세요." : "저장소에 닿지 못했습니다. 잠시 뒤 다시 시도해 주세요.", true);
+      });
+  }
 
   /* ---------- 아티팩트 런타임 대신 ---------- */
   var downloads = {
