@@ -572,11 +572,11 @@ function openSession(id) {
   $('pg').innerHTML = `<i class="dot" style="background:${g.c};border-radius:2px"></i>${esc(g.name.toUpperCase())}${par ? ' · 갈래 ← ' + esc(par.title) : ''}`;
   $('pt').textContent = s.title;
   $('ps').innerHTML = `<i class="dot d-${s.st}"></i>${stTxt[s.st]}${s.live ? ' · 앱에서 열려 있음' : ''} · ${ago(s.last)} · ${esc(s.model || '')} · ${esc(s.mode || '')} · <a href="${appLink(id)}">앱에서 열기</a>`;
-  const L = cmdsOf(id);
+  const L = cmdsOf(id).slice().reverse();
   const oldTv = TALK.id === id ? $('talk') : null, keepTop = oldTv ? oldTv.scrollTop : null;
   watchTalk(id);
   $('pb').innerHTML = (s.st === 'wait' ? `<div class="note">이 세션은 앱에서 승인이나 답을 기다리고 있습니다. 여기서 보내면 그 일이 끝난 뒤에 들어갑니다. 바로 답하려면 <a href="${appLink(id)}">앱에서 열기</a>.</div>` : '')
-    + (s.live ? `<div class="note">이 세션은 지금 앱에서 열려 있습니다. 여기서 보내면 대화가 두 갈래로 갈리지 않도록 <b>앱에서 닫힐 때까지 기다렸다가</b> 넣습니다. 바로 시키려면 <a href="${appLink(id)}">앱에서 열어</a> 직접 말하세요.</div>` : '')
+    + (s.live ? `<div class="note">이 세션은 지금 앱에서 열려 있습니다. 여기서 보내면 <b>세션 간 메시지로 앱의 그 대화에 바로</b> 들어갑니다(갈래 없음). 그 통로가 없는 세션이면 앱에서 닫힐 때까지 기다렸다가 넣습니다 — 지시 줄에 «줄 섬» 으로 보입니다.</div>` : '')
     + `<h4>대화 — 앱 · 홈페이지 한 줄로</h4><div class="cv" id="talk">${talkHTML(s)}</div>`
     + `<h4>내가 보낸 지시 ${L.length}</h4><ul class="lg">${L.length ? L.map(c => cmdHTML(c)).join('') : '<li style="color:var(--dim)">아직 보낸 지시 없음</li>'}</ul>`;
   const tv = $('talk'); if (tv) tv.scrollTop = keepTop != null ? keepTop : tv.scrollHeight;
@@ -624,7 +624,7 @@ function openGroup(id, keepView) {
   const g = gOf(id), list = S.filter(s => s.g === id); cur = { k: 'g', id }; stopTalk();
   $('pg').innerHTML = `<i class="dot" style="background:${g.c};border-radius:2px"></i>묶음`; $('pt').textContent = g.name;
   $('ps').textContent = `세션 ${list.length}개 · 작업 중 ${list.filter(s => s.st === 'run').length} · 내 답 기다림 ${list.filter(s => s.st === 'wait').length}`;
-  const L = CMDS.filter(c => list.some(s => s.id === c.to?.id)).slice(0, 20);
+  const L = CMDS.filter(c => list.some(s => s.id === c.to?.id)).slice(0, 20).reverse();
   $('pb').innerHTML = `<h4>세션</h4><div class="mem">${list.map(s => `<button data-open="${s.id}"><i class="dot d-${s.st}"></i>${esc(s.title)}<small>${ago(s.last)}</small></button>`).join('')}</div>`
     + `<h4>이 묶음에 보낸 지시</h4><ul class="lg">${L.length ? L.map(c => cmdHTML(c, true)).join('') : '<li style="color:var(--dim)">없음</li>'}</ul>`;
   const n = list.filter(s => s.canSend).length;
@@ -641,15 +641,22 @@ function openOwner() {
   $('ps').textContent = '누구에게 갈지 페이가 정해서 나눕니다';
   const waits = S.filter(s => s.st === 'wait');
   $('pb').innerHTML = `<h4>앱에서 내 답을 기다리는 세션 ${waits.length}</h4><div class="mem">${waits.map(s => `<button data-open="${s.id}"><i class="dot d-wait"></i>${esc(s.title)}<small>${ago(s.last)}</small></button>`).join('') || '<span style="color:var(--dim);font-size:13px">없음</span>'}</div>`
-    + `<h4>최근 지시 전체</h4><ul class="lg">${CMDS.slice(0, 25).map(c => cmdHTML(c, true)).join('') || '<li style="color:var(--dim)">없음</li>'}</ul>`
+    + `<h4>최근 지시 전체</h4><ul class="lg">${CMDS.slice(0, 25).reverse().map(c => cmdHTML(c, true)).join('') || '<li style="color:var(--dim)">없음</li>'}</ul>`
     + (HIDDEN ? `<p style="font-size:12px;color:var(--dim)">숨긴 세션: 보관 ${HIDDEN.archived} · 예약 작업이 만든 것 ${HIDDEN.scheduled}</p>` : '');
   $('pto').innerHTML = sec ? '받는 곳: <b>페이(PA)</b> → 알맞은 세션으로' : 'PA 세션을 찾지 못했습니다';
   $('msg').placeholder = '예: 릴스 더빙은 A 로 하고, 리듬 블레이드는 영상 보고 다시 말할게';
   $('send').disabled = !sec; $('cost').textContent = '';
   show();
 }
-function show() { $('panel').classList.add('open'); markSel(); closeRadial(); }
-function refreshPanel() { if (!cur || !$('panel').classList.contains('open')) return; const keep = $('msg').value; cur.k === 's' ? openSession(cur.id) : cur.k === 'g' ? openGroup(cur.id, true) : openOwner(); $('msg').value = keep; }
+// 지시 목록은 앱처럼 아래로 쌓는다(옛 → 새, 2026-11-14 오너) — 새로 열면 맨 아래(가장 최근)가 보이게
+// 폰의 반 높이 카드에서 맨 아래(지시 목록 끝)로 내리면 대화 칸이 통째로 위로 밀려 안 보인다 — 폰 세션 카드는 대화 칸 끝에 맞춘다
+function show() { $('panel').classList.add('open'); markSel(); closeRadial(); const pb = $('pb'); if (MOB() && cur && cur.k === 's' && $('talk')) talkToEnd(); else pb.scrollTop = pb.scrollHeight; }
+function refreshPanel() {
+  if (!cur || !$('panel').classList.contains('open')) return;
+  const keep = $('msg').value, pb = $('pb'), atEnd = pb.scrollHeight - pb.scrollTop - pb.clientHeight < 40, top = pb.scrollTop;
+  cur.k === 's' ? openSession(cur.id) : cur.k === 'g' ? openGroup(cur.id, true) : openOwner();
+  $('msg').value = keep; pb.scrollTop = atEnd ? pb.scrollHeight : top; // 맨 아래를 보던 중이면 새 것이 와도 맨 아래에 붙어 있다
+}
 $('px').onclick = () => { $('panel').classList.remove('open', 'full'); cur = null; stopTalk(); markSel(); };
 // 폰의 아래 카드 — 손잡이를 누르거나 위로 끌면 화면 전체(대화창), 아래로 끌면 반 → 닫기
 (() => {
