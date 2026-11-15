@@ -671,6 +671,11 @@ $('px').onclick = () => { $('panel').classList.remove('open', 'full'); cur = nul
   });
 })();
 
+// Enter 는 보내기, Shift+Enter 는 줄바꿈 — 앱과 같게 (2026-11-15 오너). 한글 조합 중의 Enter 는 글자 확정이라 보내지 않는다
+$('msg').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.shiftKey || e.isComposing || e.keyCode === 229) return;
+  e.preventDefault(); if (!$('send').disabled) $('send').onclick();
+});
 $('send').onclick = async () => {
   const text = $('msg').value.trim(); if (!text || !cur) { $('msg').focus(); return; }
   const ids = cur.k === 's' ? [cur.id] : cur.k === 'g' ? S.filter(s => s.g === cur.id && s.canSend).map(s => s.id) : [secretary()?.id].filter(Boolean);
@@ -695,8 +700,8 @@ function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add(
 world.addEventListener('click', e => {
   if (moved || dragged) { dragged = false; return; }   // 끌어 옮긴 뒤 손을 뗀 것은 누르기가 아니다
   const ra = e.target.closest('[data-ra]'); if (ra) { closeRadial(); openSession(ra.dataset.rid); if (ra.textContent === '지시하기') $('msg').focus(); return; }
-  // 폰은 둥근 메뉴 대신 바로 아래 카드 — 손가락으로 작은 메뉴를 다시 누르지 않게
-  const s = e.target.closest('[data-s]'); if (s) { if (MOB()) { openSession(s.dataset.s); return; } cur = { k: 's', id: s.dataset.s }; markSel(); openRadial(s.dataset.s); return; }
+  // 세션을 누르면 메뉴 없이 바로 그 세션이 열리고 입력 칸에 커서 — 앱과 같은 방향 (2026-11-15 오너). «앱에서 열기» 는 카드 머리에 있다
+  const s = e.target.closest('[data-s]'); if (s) { openSession(s.dataset.s); const m = $('msg'); if (!m.disabled) m.focus({ preventScroll: true }); return; }
   const g = e.target.closest('[data-g]'); if (g) { openGroup(g.dataset.g); return; }
   if (e.target.closest('[data-o]')) openOwner();
 });
