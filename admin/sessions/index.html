@@ -630,7 +630,7 @@ function watchTalk(id) {
   if (TALK.id === id) return;
   stopTalk(); TALK.id = id; talkScrolled = false;
   const ping = () => fs.doc('talk_req/' + id).set({ at: firebase.firestore.FieldValue.serverTimestamp() }).catch(() => {});
-  ping(); TALK.ping = setInterval(ping, 60 * 1000);
+  ping(); TALK.ping = setInterval(ping, 60 * 1000); TALK.now = ping;
   TALK.off = fs.doc('feed/talk_' + id).onSnapshot(s => {
     if (TALK.id !== id) return;
     TALK.d = s.exists ? s.data() : null;
@@ -646,6 +646,9 @@ function talkToEnd() {
   const tv = $('talk'), pb = $('pb'); if (!MOB() || !tv) return;
   pb.scrollTop = Math.max(0, tv.offsetTop + tv.offsetHeight - pb.clientHeight + 8);
 }
+// 폰에서 다른 앱에 갔다 오면 1분 간격 «보고 있음» 이 멈춰 3분 뒤 중계가 대화 올리기를 멈춘다 — 돌아오면 바로 다시 알린다 (11-15 «앱에서 한 대화가 안 보임»)
+document.addEventListener('visibilitychange', () => { if (!document.hidden && TALK.now) TALK.now(); });
+window.addEventListener('focus', () => { if (TALK.now) TALK.now(); });
 function stopTalk() { if (TALK.off) TALK.off(); if (TALK.ping) clearInterval(TALK.ping); TALK = { id: null, d: null, off: null, ping: null }; }
 // 이 세션이 게시한 아티팩트 — 중계가 대화 파일의 게시 기록에서 모은다(최근 순, 12개까지). claude.ai 비공개 페이지라 새 탭으로 연다
 function artsHTML(s) {
