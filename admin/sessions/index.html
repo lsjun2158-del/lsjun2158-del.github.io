@@ -144,6 +144,16 @@ svg.links{position:absolute;overflow:visible;pointer-events:none;left:0;top:0}
 @media (max-width:700px){.rz{display:none}}
 .who{font:600 11px var(--mono);color:var(--dim);margin-right:6px}
 .note{background:rgba(255,179,108,.08);border:1px solid rgba(255,179,108,.3);border-radius:10px;padding:10px 12px;font-size:13px;margin:8px 0}
+.arts summary{cursor:pointer;list-style:none}
+.arts summary::-webkit-details-marker{display:none}
+.arts summary h4{display:inline}
+.arts summary h4::after{content:' ▾';color:var(--dim)}
+.arts:not([open]) summary h4::after{content:' ▸'}
+.arts ul{margin:6px 0 10px;padding:0;list-style:none}
+.arts li{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-size:13px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);overflow-wrap:anywhere}
+.arts li a{color:var(--mint);text-decoration:none;flex:1 1 auto;min-width:0}
+.arts li a:hover{text-decoration:underline}
+.arts li small{font:500 11px var(--mono);color:var(--dim)}
 .lg{margin:0;padding:0;list-style:none}
 .lg li{font-size:13px;margin-bottom:12px;overflow-wrap:anywhere}
 .lg .tx{white-space:pre-wrap}
@@ -602,6 +612,7 @@ function openSession(id) {
   watchTalk(id);
   $('pb').innerHTML = (s.st === 'wait' ? `<div class="note">이 세션은 앱에서 승인이나 답을 기다리고 있습니다. 여기서 보내면 그 일이 끝난 뒤에 들어갑니다. 바로 답하려면 <a href="${appLink(id)}">앱에서 열기</a>.</div>` : '')
     + (s.live ? `<div class="note">이 세션은 지금 앱에서 열려 있습니다. 여기서 보내면 <b>세션 간 메시지로 앱의 그 대화에 바로</b> 들어갑니다(갈래 없음). 그 통로가 없는 세션이면 앱에서 닫힐 때까지 기다렸다가 넣습니다 — 지시 줄에 «줄 섬» 으로 보입니다.</div>` : '')
+    + artsHTML(s)
     + `<h4>대화 — 앱 · 홈페이지 한 줄로</h4><div class="cv" id="talk">${talkHTML(s)}</div>`
     + `<h4>내가 보낸 지시 ${L.length}</h4><ul class="lg">${L.length ? L.map(c => cmdHTML(c)).join('') : '<li style="color:var(--dim)">아직 보낸 지시 없음</li>'}</ul>`;
   const tv = $('talk'); if (tv) tv.scrollTop = keepTop != null ? keepTop : tv.scrollHeight;
@@ -636,6 +647,15 @@ function talkToEnd() {
   pb.scrollTop = Math.max(0, tv.offsetTop + tv.offsetHeight - pb.clientHeight + 8);
 }
 function stopTalk() { if (TALK.off) TALK.off(); if (TALK.ping) clearInterval(TALK.ping); TALK = { id: null, d: null, off: null, ping: null }; }
+// 이 세션이 게시한 아티팩트 — 중계가 대화 파일의 게시 기록에서 모은다(최근 순, 12개까지). claude.ai 비공개 페이지라 새 탭으로 연다
+function artsHTML(s) {
+  const A = (s.arts || []).filter(a => /^https:\/\/claude\.ai\//.test(a.u));
+  if (!A.length) return '';
+  const dt = ts => ts ? new Date(ts).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }) : '';
+  return `<details class="arts"${A.length <= 4 ? ' open' : ''}><summary><h4>아티팩트 ${A.length}</h4></summary><ul>`
+    + A.map(a => `<li><a href="${esc(a.u)}" target="_blank" rel="noopener noreferrer">${esc(a.t)}</a><small>${dt(a.at)}${a.n > 1 ? ` · ${a.n}번 게시` : ''}</small></li>`).join('')
+    + '</ul></details>';
+}
 function talkHTML(s) {
   const d = TALK.id === s.id ? TALK.d : null;
   if (!d) return (s.me ? `<p class="me"><span class="who">나</span>${esc(s.me)}</p>` : '') + (s.ai ? `<p><span class="who">AI</span>${esc(s.ai)}</p>` : '')
