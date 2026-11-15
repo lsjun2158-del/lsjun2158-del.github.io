@@ -744,7 +744,8 @@ function pendHTML(s, turns) {
   // 대화는 최근 40마디만 온다 — 그보다 앞선 지시는 이미 대화 속 일이므로 «아직 안 들어감» 으로 다시 붙이지 않는다
   // (11-16 오너 «PA 봐봐» — 21:50 지시들이 맨 아래에 다시 붙어 지금 대화가 묻혔다)
   const first = turns.length && turns[0].ts ? Date.parse(turns[0].ts) : 0;
-  const P = cmdsOf(s.id).filter(c => { const at = c.createdAt && c.createdAt.toMillis ? c.createdAt.toMillis() : Date.now(); return at > day && at > first && !inTalk(c); }).reverse();
+  const P = cmdsOf(s.id).filter(c => { const at = c.createdAt && c.createdAt.toMillis ? c.createdAt.toMillis() : Date.now(); const going = ['sent', 'received', 'queued', 'working'].includes(c.state);   // 아직 진행 중인 지시는 창과 상관없이 남긴다
+    return at > day && (going || at > first) && !inTalk(c); }).reverse();
   return P.map(c => {
     const n = stepIdx[c.state] ?? 0, bad = c.state === 'failed' || c.state === 'cancelled';
     const steps = bad ? `<span class="bad">${c.state === 'failed' ? '실패' : '취소함'}</span>`
