@@ -695,7 +695,7 @@ function watchTalk(id) {
   }, () => {
     // 듣기가 한 번 끊기면(폰 잠금 · 로그인 갱신 · 망 끊김) 다시 붙지 않던 것 — 3초 뒤 새로 붙인다 (11-16 오너 «지금 하는 말도 안 보임»)
     if (TALK.id !== id) return;
-    stopTalk(); setTimeout(() => { if (!TALK.id && cur.k === 's' && cur.id === id) watchTalk(id); }, 3000);
+    stopTalk(); setTimeout(() => { if (!TALK.id && cur && cur.k === 's' && cur.id === id) watchTalk(id); }, 3000);
   });
 }
 // 화면에 돌아오면 «보고 있음» 만 알리지 않고 듣기를 새로 붙인다 — 끊긴 채 옛 대화를 보고 있지 않게
