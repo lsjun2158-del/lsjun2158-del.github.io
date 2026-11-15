@@ -724,7 +724,8 @@ function talkHTML(s) {
 // 홈페이지에서 보냈는데 아직 대화에 안 들어간 지시 — 대화 끝에 진행 표시와 함께 (들어가면 대화 한 줄기로 옮겨 간다)
 function pendHTML(s, turns) {
   const day = Date.now() - 24 * 3600 * 1000, sq = t => String(t || '').replace(/\s+/g, ' ').trim().slice(0, 40);
-  const inTalk = c => turns.some(t => t.who === 'me' && sq(t.t) === sq(c.text));
+  // 같은 글을 다시 보낸 경우를 가르려고, 그 지시를 보낸 뒤(1분 여유)에 대화에 들어온 말만 맞춘다
+  const inTalk = c => { const at = c.createdAt && c.createdAt.toMillis ? c.createdAt.toMillis() : 0; return turns.some(t => t.who === 'me' && sq(t.t) === sq(c.text) && (!t.ts || Date.parse(t.ts) >= at - 60000)); };
   const P = cmdsOf(s.id).filter(c => { const at = c.createdAt && c.createdAt.toMillis ? c.createdAt.toMillis() : Date.now(); return at > day && !inTalk(c); }).reverse();
   return P.map(c => {
     const n = stepIdx[c.state] ?? 0, bad = c.state === 'failed' || c.state === 'cancelled';
