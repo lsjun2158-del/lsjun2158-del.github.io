@@ -783,17 +783,23 @@ function openGroup(id, keepView) {
 // 비서 세션 — 2026-11-13 오너가 이름을 PA(부를 때 «페이»)로 정함, 옛 이름 비서창
 function secretary() { return S.find(s => s.title === 'PA') || S.find(s => s.title === '비서창'); }
 function openOwner() {
-  cur = { k: 'o' }; stopTalk(); const sec = secretary();
+  // 오너 별 = 페이에게 맡기는 곳 — 페이(PA)와 앱에서 나눈 대화도 같이 보인다 (11-15 오너 «왜 또 앱 대화 안 보이냐»)
+  cur = { k: 'o' }; const sec = secretary();
+  const tvOld = sec && TALK.id === sec.id ? $('talk') : null, keepTop = tvOld ? tvOld.scrollTop : null;
+  if (sec) watchTalk(sec.id); else stopTalk();
   $('pg').textContent = '오너'; $('pt').textContent = '페이(PA)에게 맡기기';
   $('ps').textContent = '누구에게 갈지 페이가 정해서 나눕니다';
   const waits = S.filter(s => s.st === 'wait');
-  $('pb').innerHTML = `<h4>앱에서 내 답을 기다리는 세션 ${waits.length}</h4><div class="mem">${waits.map(s => `<button data-open="${s.id}"><i class="dot d-wait"></i>${esc(s.title)}<small>${ago(s.last)}</small></button>`).join('') || '<span style="color:var(--dim);font-size:13px">없음</span>'}</div>`
+  $('pb').innerHTML = (sec ? `<h4>페이(PA)와의 대화 — 앱 · 홈페이지 한 줄로</h4><div class="cv" id="talk">${talkHTML(sec)}</div>` : '')
+    + `<h4>앱에서 내 답을 기다리는 세션 ${waits.length}</h4><div class="mem">${waits.map(s => `<button data-open="${s.id}"><i class="dot d-wait"></i>${esc(s.title)}<small>${ago(s.last)}</small></button>`).join('') || '<span style="color:var(--dim);font-size:13px">없음</span>'}</div>`
     + `<h4>최근 지시 전체</h4><ul class="lg">${CMDS.slice(0, 25).reverse().map(c => cmdHTML(c, true)).join('') || '<li style="color:var(--dim)">없음</li>'}</ul>`
     + (HIDDEN ? `<p style="font-size:12px;color:var(--dim)">숨긴 세션: 보관 ${HIDDEN.archived} · 예약 작업이 만든 것 ${HIDDEN.scheduled}</p>` : '');
   $('pto').innerHTML = sec ? '받는 곳: <b>페이(PA)</b> → 알맞은 세션으로' : 'PA 세션을 찾지 못했습니다';
   $('msg').placeholder = '예: 릴스 더빙은 A 로 하고, 리듬 블레이드는 영상 보고 다시 말할게';
   $('send').disabled = !sec; $('cost').textContent = '';
   show();
+  $('pb').scrollTop = 0;   // 대화 칸이 맨 위에 보이게
+  const tv = $('talk'); if (tv) tv.scrollTop = keepTop != null ? keepTop : tv.scrollHeight;
 }
 // 지시 목록은 앱처럼 아래로 쌓는다(옛 → 새, 2026-11-14 오너) — 새로 열면 맨 아래(가장 최근)가 보이게
 // 폰의 반 높이 카드에서 맨 아래(지시 목록 끝)로 내리면 대화 칸이 통째로 위로 밀려 안 보인다 — 폰 세션 카드는 대화 칸 끝에 맞춘다
@@ -862,7 +868,12 @@ world.addEventListener('click', e => {
   const ra = e.target.closest('[data-ra]'); if (ra) { closeRadial(); openSession(ra.dataset.rid); if (ra.textContent === '지시하기') $('msg').focus(); return; }
   // 세션을 누르면 메뉴 없이 바로 그 세션이 열리고 입력 칸에 커서 — 앱과 같은 방향 (2026-11-15 오너). «앱에서 열기» 는 카드 머리에 있다
   const s = e.target.closest('[data-s]'); if (s) { openSession(s.dataset.s); const m = $('msg'); if (!m.disabled) m.focus({ preventScroll: true }); return; }
-  const g = e.target.closest('[data-g]'); if (g) { openGroup(g.dataset.g); return; }
+  const g = e.target.closest('[data-g]');
+  if (g) {   // 세션이 하나뿐인 묶음(비서실 = PA 등)은 묶음 대신 그 세션을 바로 연다
+    const one = S.filter(s => s.g === g.dataset.g);
+    if (one.length === 1) openSession(one[0].id); else openGroup(g.dataset.g);
+    return;
+  }
   if (e.target.closest('[data-o]')) openOwner();
 });
 const setTopH = () => document.documentElement.style.setProperty('--topH', $('top').offsetHeight + 'px');
