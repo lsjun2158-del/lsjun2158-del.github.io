@@ -118,6 +118,10 @@ svg.links{position:absolute;overflow:visible;pointer-events:none;left:0;top:0}
 .cv p{margin:0 0 10px;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
 .cv .who small{font-weight:400;opacity:.7;margin-left:4px}
 .cv .me{color:var(--cyan)}
+.cv.one{max-height:none;overflow:visible;padding-right:0}
+.cv .er{margin-top:4px;padding:8px 10px;border-left:2px solid var(--red);background:rgba(255,77,109,.06);border-radius:0 8px 8px 0;white-space:pre-wrap}
+.cv .pend{opacity:.85}
+.cv .pend .who button{color:var(--muted);text-decoration:underline;font-size:11px}
 /* 대화 한 마디 — AI 답은 마크다운을 앱처럼 그린다 (2026-11-15 오너) */
 .cv .tk{margin:0 0 14px;font-size:13px;line-height:1.55;overflow-wrap:anywhere}
 .cv .tk .who{display:block;margin-bottom:3px}
@@ -226,6 +230,7 @@ textarea:focus{outline:none;border-color:var(--cyan)}
   .pb{padding:4px 16px 10px}
   .cv{max-height:30vh}
   .panel.full .cv{max-height:56vh}
+  .cv.one,.panel.full .cv.one{max-height:none}
   .cp{padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))}
   textarea{min-height:44px;font-size:16px}
   .panel h4,.gp{font-family:var(--sans);letter-spacing:.02em}
@@ -662,10 +667,9 @@ function openSession(id) {
   $('pb').innerHTML = (s.st === 'wait' ? `<div class="note">이 세션은 앱에서 승인이나 답을 기다리고 있습니다. 여기서 보내면 그 일이 끝난 뒤에 들어갑니다. 바로 답하려면 <a href="${appLink(id)}">앱에서 열기</a>.</div>` : '')
     + (s.live ? `<div class="note">이 세션은 지금 앱에서 열려 있습니다. 여기서 보내면 <b>세션 간 메시지로 앱의 그 대화에 바로</b> 들어갑니다(갈래 없음). 그 통로가 없는 세션이면 앱에서 닫힐 때까지 기다렸다가 넣습니다 — 지시 줄에 «줄 섬» 으로 보입니다.</div>` : '')
     + artsHTML(s)
-    + `<h4>대화 — 앱 · 홈페이지 한 줄로</h4><div class="cv" id="talk">${talkHTML(s)}</div>`
-    + `<h4>내가 보낸 지시 ${L.length}</h4><ul class="lg">${L.length ? L.map(c => cmdHTML(c)).join('') : '<li style="color:var(--dim)">아직 보낸 지시 없음</li>'}</ul>`;
-  const tv = $('talk'); if (tv) tv.scrollTop = keepTop != null ? keepTop : tv.scrollHeight;
-  if (keepTop == null) talkToEnd();
+    // 대화는 한 줄기 하나 — 앱에서 한 말 · 홈페이지 지시 · 답이 앱처럼 차례로, 아직 안 들어간 지시는 맨 아래에 진행 표시로 (11-15 오너 «하나로 해야지»)
+    + `<div class="cv one" id="talk">${talkHTML(s)}</div>`;
+  if (keepTop == null) { const pb = $('pb'); pb.scrollTop = pb.scrollHeight; }
   $('pto').innerHTML = `받는 곳: <b>${esc(s.title)}</b>${s.canSend ? '' : ' — 대화 파일이 없어 보낼 수 없음'}`;
   $('msg').placeholder = '이 세션에 시킬 일 — 오너가 앱에서 치는 것과 같게 들어갑니다';
   $('send').disabled = !s.canSend; $('cost').textContent = '';
@@ -683,11 +687,10 @@ function watchTalk(id) {
   TALK.off = fs.doc('feed/talk_' + id).onSnapshot(s => {
     if (TALK.id !== id) return;
     TALK.d = s.exists ? s.data() : null;
-    const tv = $('talk'); if (!tv) return;
-    const atEnd = tv.scrollHeight - tv.scrollTop - tv.clientHeight < 40;
+    const tv = $('talk'), pb = $('pb'); if (!tv) return;
+    const atEnd = pb.scrollHeight - pb.scrollTop - pb.clientHeight < 60;   // 대화가 카드 전체라 카드가 굴러간다
     tv.innerHTML = talkHTML(S.find(x => x.id === id) || {});
-    if (!talkScrolled) talkToEnd();
-    if (atEnd || !talkScrolled) { tv.scrollTop = tv.scrollHeight; talkScrolled = true; }
+    if (atEnd || !talkScrolled) { pb.scrollTop = pb.scrollHeight; talkScrolled = true; }
   }, () => {});
 }
 // 폰의 아래 카드는 높이가 낮아 대화 칸이 카드 아래로 밀려난다 — 대화 칸이 보이게 카드를 내린다
@@ -704,18 +707,34 @@ function artsHTML(s) {
   const A = (s.arts || []).filter(a => /^https:\/\/claude\.ai\//.test(a.u));
   if (!A.length) return '';
   const dt = ts => ts ? new Date(ts).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }) : '';
-  return `<details class="arts"${A.length <= 4 ? ' open' : ''}><summary><h4>아티팩트 ${A.length}</h4></summary><ul>`
+  return `<details class="arts"><summary><h4>아티팩트 ${A.length}</h4></summary><ul>`
     + A.map(a => `<li><a href="${esc(a.u)}" target="_blank" rel="noopener noreferrer">${esc(a.t)}</a><small>${dt(a.at)}${a.n > 1 ? ` · ${a.n}번 게시` : ''}</small></li>`).join('')
     + '</ul></details>';
 }
+const tmS = ts => ts ? new Date(ts).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 function talkHTML(s) {
-  const d = TALK.id === s.id ? TALK.d : null;
-  if (!d) return (s.me ? `<p class="me"><span class="who">나</span>${esc(s.me)}</p>` : '') + (s.ai ? `<p><span class="who">AI</span>${esc(s.ai)}</p>` : '')
-    + `<p style="color:var(--dim)">${s.me || s.ai ? '전체 대화를 PC 에서 불러오는 중…' : '읽을 대화 없음'}</p>`;
-  if (!d.turns || !d.turns.length) return '<p style="color:var(--dim)">읽을 대화 없음</p>';
-  const tm = ts => ts ? new Date(ts).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-  return (d.more ? '<p style="color:var(--dim);font-size:12px">더 앞의 대화는 앱에서</p>' : '')
-    + d.turns.map(t => `<div class="tk${t.who === 'me' ? ' me' : ''}"><span class="who">${t.who === 'me' ? (t.via === 'web' ? '나 · 홈페이지' : '나 · 앱') : 'AI'} <small>${tm(t.ts)}</small></span><div class="md">${md(t.t)}</div></div>`).join('');
+  const d = TALK.id === s.id ? TALK.d : null, turns = (d && d.turns) || [];
+  const body = !d
+    ? (s.me ? `<p class="me"><span class="who">나</span>${esc(s.me)}</p>` : '') + (s.ai ? `<p><span class="who">AI</span>${esc(s.ai)}</p>` : '')
+      + `<p style="color:var(--dim)">${s.me || s.ai ? '전체 대화를 PC 에서 불러오는 중…' : '읽을 대화 없음'}</p>`
+    : (d.more ? '<p style="color:var(--dim);font-size:12px">더 앞의 대화는 앱에서</p>' : '')
+      + (turns.length ? turns.map(t => `<div class="tk${t.who === 'me' ? ' me' : ''}"><span class="who">${t.who === 'me' ? (t.via === 'web' ? '나 · 홈페이지' : '나 · 앱') : 'AI'} <small>${tmS(t.ts)}</small></span><div class="md">${md(t.t)}</div></div>`).join('') : '<p style="color:var(--dim)">읽을 대화 없음</p>');
+  return body + pendHTML(s, turns);
+}
+// 홈페이지에서 보냈는데 아직 대화에 안 들어간 지시 — 대화 끝에 진행 표시와 함께 (들어가면 대화 한 줄기로 옮겨 간다)
+function pendHTML(s, turns) {
+  const day = Date.now() - 24 * 3600 * 1000, sq = t => String(t || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+  const inTalk = c => turns.some(t => t.who === 'me' && sq(t.t) === sq(c.text));
+  const P = cmdsOf(s.id).filter(c => { const at = c.createdAt && c.createdAt.toMillis ? c.createdAt.toMillis() : Date.now(); return at > day && !inTalk(c); }).reverse();
+  return P.map(c => {
+    const n = stepIdx[c.state] ?? 0, bad = c.state === 'failed' || c.state === 'cancelled';
+    const steps = bad ? `<span class="bad">${c.state === 'failed' ? '실패' : '취소함'}</span>`
+      : STEP.map((x, i) => `<span class="${i <= n ? 'done' : ''}">${i === 1 && c.state === 'queued' ? '줄 섬 — ' + esc(c.why || '세션이 일하는 중') : i === 3 && c.state === 'working' && c.step ? esc(c.step) : x}</span>`).join('');
+    return `<div class="tk me pend"><span class="who">나 · 홈페이지 <small>${tmS(c.createdAt && c.createdAt.toMillis ? c.createdAt.toMillis() : null)}</small>${['sent', 'received', 'queued'].includes(c.state) ? ` · <button data-cancel="${c.id}">취소</button>` : ''}</span>
+      <div class="md">${esc(c.text)}</div><div class="steps">${steps}</div></div>`
+      + (c.reply ? `<div class="tk"><span class="who">AI</span><div class="md">${md(c.reply)}</div></div>` : '')
+      + (c.error && !c.reply ? `<div class="tk"><span class="who">중계</span><div class="er">${esc(c.error)}</div></div>` : '');
+  }).join('');
 }
 // 마크다운 → HTML (앱에서 보이는 모양과 같게). 먼저 전부 이스케이프하고 정해진 꼴만 태그로 바꾼다 — 대화 원문의 HTML 은 그대로 글자로 보인다
 function md(src) {
@@ -874,7 +893,7 @@ world.addEventListener('click', e => {
     if (one.length === 1) openSession(one[0].id); else openGroup(g.dataset.g);
     return;
   }
-  if (e.target.closest('[data-o]')) openOwner();
+  if (e.target.closest('[data-o]')) { const sec = secretary(); if (sec) openSession(sec.id); else openOwner(); }   // 오너 별 = 페이에게 맡기기 = PA 와의 대화 하나 (11-15 «하나로 해야지»)
 });
 const setTopH = () => document.documentElement.style.setProperty('--topH', $('top').offsetHeight + 'px');
 setTopH(); new ResizeObserver(setTopH).observe($('top'));
