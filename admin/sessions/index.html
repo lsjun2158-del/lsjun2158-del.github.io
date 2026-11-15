@@ -46,6 +46,53 @@ nav.site a[aria-current=page]{color:var(--text);border-bottom-color:var(--cyan)}
 .meter b{font:600 13px var(--mono);color:var(--text)}
 .meter small{font:500 11px var(--mono);color:var(--dim)}
 .meter.stale{opacity:.5}
+/* ── 조직도 (2026-11-15 오너 «별자리를 조직도로») — 앱 사이드바 묶음이 정본: «비서실» · «프로젝트 · ○○»(월드) · 그 밖은 부서 ── */
+.vw{display:flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:999px}
+.vw button{padding:4px 12px;border-radius:999px;font-size:12.5px;color:var(--muted)}
+.vw button.on{background:var(--high);color:var(--text)}
+.org{position:fixed;inset:var(--topH,64px) 0 0 0;z-index:12;overflow:auto;background:var(--bg);padding:28px 24px 96px;display:none}
+body.v-org .org{display:block}
+body.v-org .groups,body.v-org .zoom{display:none}
+.oc{max-width:1500px;margin:0 auto;display:flex;flex-direction:column;align-items:center}
+.ceo{display:flex;align-items:flex-start;gap:28px;position:relative}
+.ob{border:1px solid var(--line2);border-radius:12px;background:var(--surface);padding:10px 14px;text-align:center}
+.ob.boss{border-color:var(--cyan);min-width:160px}
+.ob.boss b{display:block;font:700 15px var(--sans)}
+.ob.boss small{color:var(--dim);font-size:11.5px}
+.sec{position:relative;min-width:190px}
+.sec::before{content:"";position:absolute;right:100%;top:22px;width:28px;border-top:1px dashed var(--line2)}
+.vline{width:0;height:26px;border-left:1px solid var(--line2)}
+.depts{display:flex;align-items:flex-start;justify-content:center;gap:18px;position:relative;padding-top:22px;width:100%}
+.dept{position:relative;flex:0 1 auto;min-width:200px;display:flex;flex-direction:column;align-items:stretch}
+.dept::before{content:"";position:absolute;left:50%;top:-22px;height:22px;border-left:1px solid var(--line2)}
+.depts::before{content:"";position:absolute;top:0;left:var(--l,0);right:var(--r,0);border-top:1px solid var(--line2)}
+.dh{display:flex;align-items:baseline;justify-content:center;gap:8px;padding:8px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);font-weight:700;margin-bottom:10px;cursor:pointer}
+.dh small,.wh small{font:500 11px var(--mono);color:var(--dim);font-weight:500}
+.dept.proj{flex:1 1 auto;max-width:1000px}
+.worlds{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.wd{border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(255,255,255,.015)}
+.wd.empty{opacity:.45}
+.wh{display:flex;align-items:baseline;gap:8px;justify-content:space-between;padding:2px 4px 8px;font-weight:700;font-size:13px;cursor:pointer;border:0;width:100%;text-align:left}
+.wh i{width:8px;height:8px;border-radius:2px;flex:none;align-self:center}
+.sl{display:flex;flex-direction:column;gap:6px}
+.sc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;padding:7px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);overflow-wrap:anywhere}
+.sc:hover{border-color:var(--muted)}
+.sc.sel{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan)}
+.sc .t{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600}
+.sc .t i{width:8px;height:8px;border-radius:50%;flex:none;background:var(--dim)}
+.sc.st-run .t i{background:var(--mint);box-shadow:0 0 0 3px rgba(0,255,198,.18)}
+.sc.st-wait .t i{background:var(--orange)}
+.sc .m{font:500 11px var(--mono);color:var(--dim)}
+.sc .m b{color:var(--cyan);font-weight:600}
+.sc.kid{margin-left:14px;width:calc(100% - 14px);border-style:dashed}
+@media (max-width:700px){
+  .org{padding:16px 12px 96px}
+  .ceo{flex-direction:column;align-items:stretch;gap:10px;width:100%}
+  .sec::before,.vline,.dept::before,.depts::before{display:none}
+  .depts{flex-direction:column;align-items:stretch;padding-top:14px;gap:14px}
+  .dept{min-width:0}
+  .worlds{grid-template-columns:1fr}
+}
 .relay{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
 .relay i{width:8px;height:8px;border-radius:50%;background:var(--dim)}
 .relay.on i{background:var(--mint);box-shadow:0 0 0 3px rgba(0,255,198,.18)}
@@ -237,12 +284,14 @@ textarea:focus{outline:none;border-color:var(--cyan)}
 
 <div class="top" id="top">
   <nav class="site" aria-label="관리 화면"><a href="/admin/">HQ</a><a href="/admin/soloclimbing/">Solo Climbing</a><a href="/admin/sessions/" aria-current="page">세션 별자리</a></nav>
+  <div class="vw" id="vw"><button data-v="org">조직도</button><button data-v="star">별자리</button></div>
   <div class="stat" id="stat"></div>
   <div class="use" id="use"></div>
   <span class="relay" id="relay"><i></i><span>PC 중계 확인 중</span></span>
 </div>
 
 <div class="vp" id="vp"><div class="world" id="world"></div></div>
+<div class="org" id="org"></div>
 <div class="empty" id="empty">세션 자료를 기다리는 중…</div>
 <div class="groups" id="groups"></div>
 <div class="zoom"><button id="zi" aria-label="확대">+</button><div class="lv" id="lv">100%</div><button id="zo" aria-label="축소">−</button><button id="zf" aria-label="전체 보기">⤢</button></div>
@@ -287,7 +336,7 @@ auth.onAuthStateChanged(u => {
   fs.doc('feed/sessions').onSnapshot(s => { $('gate').style.display = 'none'; onFeed(s.exists ? s.data() : null); },
     e => { $('gateMsg').textContent = e.code === 'permission-denied' ? '이 계정은 열 수 없습니다 (오너 계정만).' : '읽지 못했습니다: ' + e.message; $('gate').style.display = 'flex'; });
   fs.doc('feed/usage').onSnapshot(s => { USAGE = s.exists ? s.data() : null; renderUsage(); }, () => {});
-  fs.collection('commands').orderBy('createdAt', 'desc').limit(120).onSnapshot(s => { CMDS = s.docs.map(d => ({ id: d.id, ...d.data() })); refreshPanel(); renderStat(); }, () => {});
+  fs.collection('commands').orderBy('createdAt', 'desc').limit(120).onSnapshot(s => { CMDS = s.docs.map(d => ({ id: d.id, ...d.data() })); refreshPanel(); renderStat(); renderOrg(); }, () => {});
 });
 
 /* ───────── 자료 ───────── */
@@ -315,8 +364,69 @@ function onFeed(d) {
     // 처음에는 화면에 그리기 전에 다 풀어 놓고 맞춘다 — 그 뒤 새 별이 생기면 움직이며 자리를 찾는다
     if (!fitted) { fitted = true; settle(); fit(allBounds(), false); } else kick(.6);
   } else { draw(); kick(.12); }
-  renderStat(); renderGroups(); renderRelay(); refreshPanel();
+  renderStat(); renderGroups(); renderRelay(); refreshPanel(); renderOrg();
 }
+
+/* ───────── 조직도 ─────────
+ * 정본은 앱 사이드바 묶음이다(이름으로 가른다): «비서실» 은 대표 옆, «프로젝트 · ○○» 는 프로젝트 부서 아래 월드, 나머지는 부서.
+ * 갈래 세션은 같은 묶음 안에 원래 세션이 있을 때만 그 밑에 들여 붙인다. 묶음을 옮기면(앱 · 홈페이지 지시) 여기도 그대로 따라온다 */
+const PROJ = /^프로젝트\s*·\s*/;
+const DEPT_ORDER = ['경영지원', '프로젝트', '콘텐츠·브랜드'];
+let VIEW = 'org';
+try { VIEW = localStorage.getItem('wmw.sessions.view') === 'star' ? 'star' : 'org'; } catch (_) {}
+function setView(v) {
+  VIEW = v; document.body.classList.toggle('v-org', v === 'org');
+  $('vw').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  try { localStorage.setItem('wmw.sessions.view', v); } catch (_) {}
+  if (v === 'org') renderOrg(); else if (Object.keys(pos).length) fit(focusG ? groupBounds(focusG) : allBounds(), false);
+}
+$('vw').onclick = e => { const b = e.target.closest('button'); if (b) setView(b.dataset.v); };
+function scHTML(s, kid) {
+  const oc = openCmds(s.id).length;
+  return `<button class="sc st-${s.st}${kid ? ' kid' : ''}${cur && cur.k === 's' && cur.id === s.id ? ' sel' : ''}" data-s="${s.id}">
+    <span class="t"><i></i>${esc(s.title)}</span><span class="m">${stTxt[s.st]} · ${ago(s.last)}${oc ? ` · <b>지시 ${oc}</b>` : ''}</span></button>`;
+}
+function listHTML(gid) {
+  const list = S.filter(s => s.g === gid), inG = id => list.some(x => x.id === id);
+  const tops = list.filter(s => !(s.parent && inG(s.parent))).sort((a, b) => a.order - b.order || b.last - a.last);
+  const walk = (s, d) => scHTML(s, d > 0) + (d < 3 ? list.filter(c => c.parent === s.id).map(c => walk(c, d + 1)).join('') : '');
+  return `<div class="sl">${tops.map(s => walk(s, 0)).join('')}</div>`;
+}
+const cnt = gid => { const l = S.filter(s => s.g === gid), r = l.filter(s => s.st === 'run').length; return `${l.length}${r ? ` · ▶ ${r}` : ''}`; };
+function renderOrg() {
+  const el = $('org'); if (!el || VIEW !== 'org') return;
+  const keep = el.scrollTop;
+  const sec = G.find(g => g.name.trim() === '비서실');
+  const worlds = G.filter(g => PROJ.test(g.name));
+  const depts = G.filter(g => g !== sec && !PROJ.test(g.name));
+  const cols = depts.map(g => ({ name: g.id === '_' ? '묶음 없음' : g.name, html: `<div class="dept"><div class="dh" data-g="${g.id}">${esc(g.id === '_' ? '묶음 없음' : g.name)} <small>${cnt(g.id)}</small></div>${listHTML(g.id)}</div>` }));
+  if (worlds.length) {
+    const n = S.filter(s => worlds.some(w => w.id === s.g)).length;
+    cols.push({ name: '프로젝트', html: `<div class="dept proj"><div class="dh" style="cursor:default">프로젝트 <small>월드 ${worlds.length} · 세션 ${n}</small></div><div class="worlds">`
+      + worlds.map(w => `<div class="wd"><button class="wh" data-g="${w.id}"><span style="display:flex;align-items:center;gap:7px"><i style="background:${w.c}"></i>${esc(w.name.replace(PROJ, ''))}</span><small>${cnt(w.id)}</small></button>${listHTML(w.id)}</div>`).join('')
+      + '</div></div>' });
+  }
+  const rank = c => { const i = DEPT_ORDER.indexOf(c.name); return c.name === '묶음 없음' ? 99 : i < 0 ? 50 : i; };
+  cols.sort((a, b) => rank(a) - rank(b));
+  el.innerHTML = `<div class="oc"><div class="ceo"><button class="ob boss" data-o="1"><b>대표</b><small>오너 · 누르면 페이(PA)에게 맡기기</small></button>`
+    + (sec ? `<div class="sec"><div class="dh" data-g="${sec.id}">비서실 <small>${cnt(sec.id)}</small></div>${listHTML(sec.id)}</div>` : '')
+    + `</div><div class="vline"></div><div class="depts" id="depts">${cols.map(c => c.html).join('')}</div></div>`;
+  el.scrollTop = keep;
+  orgLines(); requestAnimationFrame(orgLines);
+}
+// 가로 선은 맨 왼쪽 부서 가운데 ~ 맨 오른쪽 부서 가운데까지만 (그린 뒤 · 창 크기가 바뀔 때 다시 잰다)
+function orgLines() {
+  const dp = $('depts'); if (!dp) return;
+  const ds = dp.querySelectorAll(':scope > .dept');
+  if (ds.length > 1 && dp.offsetWidth) { const L = ds[0], R = ds[ds.length - 1]; dp.style.setProperty('--l', (L.offsetLeft + L.offsetWidth / 2) + 'px'); dp.style.setProperty('--r', (dp.offsetWidth - R.offsetLeft - R.offsetWidth / 2) + 'px'); }
+  else { dp.style.setProperty('--l', '50%'); dp.style.setProperty('--r', '50%'); }
+}
+addEventListener('resize', orgLines);
+$('org').addEventListener('click', e => {
+  const s = e.target.closest('[data-s]'); if (s) { openSession(s.dataset.s); renderOrg(); const m = $('msg'); if (!m.disabled) m.focus({ preventScroll: true }); return; }
+  const g = e.target.closest('[data-g]'); if (g) { openGroup(g.dataset.g); return; }
+  if (e.target.closest('[data-o]')) openOwner();
+});
 
 /* ───────── 배치: 오너 → 묶음 → 세션 → 갈래 ─────────
  * 둥글게 놓고 시작해 힘으로 푼다(2026-11-14 오너 «옵시디언처럼 절대 겹치지 않게 유기적으로»).
@@ -755,7 +865,7 @@ function refreshPanel() {
   cur.k === 's' ? openSession(cur.id) : cur.k === 'g' ? openGroup(cur.id, true) : openOwner();
   $('msg').value = keep; pb.scrollTop = atEnd ? pb.scrollHeight : top; // 맨 아래를 보던 중이면 새 것이 와도 맨 아래에 붙어 있다
 }
-$('px').onclick = () => { $('panel').classList.remove('open', 'full'); cur = null; stopTalk(); markSel(); };
+$('px').onclick = () => { $('panel').classList.remove('open', 'full'); cur = null; stopTalk(); markSel(); renderOrg(); };
 // PC 카드 폭 — 왼쪽 가장자리를 끌어 바꾸고, 이 브라우저에 기억한다 (2026-11-15 오너 «세션 카드 가로로 늘리기»)
 (() => {
   const P = $('panel'), rz = $('rz'), KEY = 'wmw.sessions.pw';
@@ -818,6 +928,7 @@ world.addEventListener('click', e => {
 });
 const setTopH = () => document.documentElement.style.setProperty('--topH', $('top').offsetHeight + 'px');
 setTopH(); new ResizeObserver(setTopH).observe($('top'));
+setView(VIEW);   // 저장해 둔 보기(조직도 · 별자리) — 맨 끝에서 켠다(위에서 부르면 아직 선언 전인 값이 있다)
 let wasMob = MOB();
 addEventListener('resize', () => {
   if (!Object.keys(pos).length) return;
