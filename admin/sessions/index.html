@@ -612,7 +612,10 @@ vp.addEventListener('contextmenu', e => { if (e.target.closest('.node')) e.preve
 vp.addEventListener('pointerdown', e => {
   moved = false;
   if (e.target.closest('.radial')) return;
-  const nd = e.target.closest('.node');
+  // 별 끌기는 마우스 왼쪽 단추만 — 휠(가운데) · 오른쪽 단추는 별 위에서 눌러도 화면 옮기기 (11-16 오너)
+  const notLeft = e.pointerType === 'mouse' && e.button !== 0;
+  if (notLeft && e.button === 1) e.preventDefault();          // 크롬 휠 자동 스크롤 막기
+  const nd = notLeft ? null : e.target.closest('.node');
   if (press && press.mode !== 'drag') endPress();           // 두 번째 손가락 — 끌기 대신 두 손가락 확대
   if (nd && !ptrs.size) {
     press = { key: nd.dataset.k, id: e.pointerId, x0: e.clientX, y0: e.clientY, cx: e.clientX, cy: e.clientY, mode: e.pointerType === 'mouse' ? 'maybe' : 'wait', touch: e.pointerType === 'touch' };
@@ -746,7 +749,7 @@ const onBack = () => { if (Date.now() - lastRewatch < 5000) return; lastRewatch 
 /* 새 판 알아채기 — GitHub Pages 가 «10분 동안 저장해 두고 써라»(max-age=600)를 붙여, 게시해도 브라우저가 옛 판을 10분 보여 줬다
  * (11-16 확인: 게시된 고침이 오너 크롬에 안 들어감). 이 페이지를 저장 무시하고 다시 받아(cache:'reload' — 저장본도 새 판으로 바뀜)
  * 표시 PAGE_VER 가 다르면 다시 불러온다. 쓰던 글이 있으면 기다린다. 열린 카드는 다시 연다. 고칠 때마다 PAGE_VER 를 바꾼다 */
-const PAGE_VER = '2026-11-16e';
+const PAGE_VER = '2026-11-16f';
 let verChecked = 0;
 async function checkNewPage() {
   if (Date.now() - verChecked < 60 * 1000) return; verChecked = Date.now();
