@@ -746,7 +746,7 @@ const onBack = () => { if (Date.now() - lastRewatch < 5000) return; lastRewatch 
 /* 새 판 알아채기 — GitHub Pages 가 «10분 동안 저장해 두고 써라»(max-age=600)를 붙여, 게시해도 브라우저가 옛 판을 10분 보여 줬다
  * (11-16 확인: 게시된 고침이 오너 크롬에 안 들어감). 이 페이지를 저장 무시하고 다시 받아(cache:'reload' — 저장본도 새 판으로 바뀜)
  * 표시 PAGE_VER 가 다르면 다시 불러온다. 쓰던 글이 있으면 기다린다. 열린 카드는 다시 연다. 고칠 때마다 PAGE_VER 를 바꾼다 */
-const PAGE_VER = '2026-11-16c';
+const PAGE_VER = '2026-11-16d';
 let verChecked = 0;
 async function checkNewPage() {
   if (Date.now() - verChecked < 60 * 1000) return; verChecked = Date.now();
@@ -959,7 +959,8 @@ function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add(
  * 호출어는 이 화면이 앞에 켜져 있을 때만 듣는다 — 폰은 잠금 · 다른 앱에서 웹페이지 마이크를 막는다(앱 단계에서 푼다) */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const V = { rec: null, mode: 'idle', wake: false, armed: 0, speaking: false };
-const WAKE = /(페이|패이|폐이|pay)\s*(야|아)?[\s,.!?~]*/i;
+// 호출어는 말 맨 앞의 «페이» 한 단어만 — «페이지» · «카카오페이» · «페이스북» 에는 깨지 않는다 (11-16 오너)
+const WAKE = /^\s*(페이|패이|폐이)(야|아)?(?![가-힣A-Za-z0-9])[\s,.!?~]*/;
 const vMsg = { idle: '눌러서 말하기', wake: '«페이» 라고 부르세요', listen: '듣는 중 — 말씀하세요', think: '생각하는 중', speak: '말하는 중 — 누르면 멈춤', task: '페이 본체가 일하는 중 — 끝나면 말로 알려 드려요' };
 function vSet(s, msg) { V.mode = s; $('vb').dataset.s = s; $('vst').textContent = msg || vMsg[s]; }
 function recStop() { const r = V.rec; V.rec = null; if (r) try { r.abort(); } catch { /* */ } }
