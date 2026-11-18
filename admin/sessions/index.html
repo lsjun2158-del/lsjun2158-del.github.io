@@ -34,6 +34,11 @@ nav.site a{display:inline-flex;align-items:center;min-height:40px;margin-bottom:
 nav.site a:hover{color:var(--text)}
 nav.site a[aria-current=page]{color:var(--text);border-bottom-color:var(--cyan)}
 .stat{display:flex;flex-wrap:wrap;gap:6px}
+/* 보기 전환 — 조직도 | 별자리 (11-18 오너) */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;gap:2px}
+.seg button{padding:4px 11px;border-radius:999px;font-size:12.5px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--high);color:var(--text);box-shadow:inset 0 0 0 1px var(--line2)}
+.seg button:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
 .stat button{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);font-size:13px;color:var(--muted)}
 .stat button b{font:600 14px var(--mono);color:var(--text)}
 .stat button.on{border-color:var(--text);color:var(--text)}
@@ -277,6 +282,7 @@ textarea:focus{outline:none;border-color:var(--cyan)}
 <div class="top" id="top">
   <nav class="site" aria-label="관리 화면"><a href="/admin/">HQ</a><a href="/admin/soloclimbing/">Solo Climbing</a><a href="/admin/sessions/" aria-current="page">세션</a></nav>
   <div class="stat" id="stat"></div>
+  <div class="seg" id="seg" role="group" aria-label="보기"><button type="button" data-v="tree">조직도</button><button type="button" data-v="star">별자리</button></div>
   <div class="use" id="use"></div>
   <span class="relay" id="relay"><i></i><span>PC 중계 확인 중</span></span>
   <button class="vb" id="vb" data-s="idle" aria-label="페이에게 말로 묻기"><i></i>페이</button>
@@ -292,7 +298,7 @@ textarea:focus{outline:none;border-color:var(--cyan)}
 <div class="vp" id="vp"><div class="world" id="world"></div></div>
 <div class="empty" id="empty">세션 자료를 기다리는 중…</div>
 <div class="groups" id="groups"></div>
-<div class="zoom"><button id="zi" aria-label="확대">+</button><div class="lv" id="lv">100%</div><button id="zo" aria-label="축소">−</button><button id="zf" aria-label="전체 보기">⤢</button><button id="zr" aria-label="처음 자리로" title="끌어 옮긴 자리를 처음 조직도 자리로">↺</button></div>
+<div class="zoom"><button id="zi" aria-label="확대">+</button><div class="lv" id="lv">100%</div><button id="zo" aria-label="축소">−</button><button id="zf" aria-label="전체 보기">⤢</button><button id="zr" aria-label="처음 자리로" title="끌어 옮긴 자리를 이 보기의 처음 자리로">↺</button></div>
 
 <aside class="panel" id="panel">
   <div class="grab" id="grab" aria-hidden="true"></div>
@@ -349,6 +355,7 @@ const appLink = id => 'claude://claude.ai/epitaxy/' + id;
 const cmdsOf = id => CMDS.filter(c => c.to && c.to.id === id);
 const openCmds = id => cmdsOf(id).filter(c => ['sent', 'received', 'queued', 'working'].includes(c.state));
 
+const layoutSigOf = () => (TREE ? 't|' : 's|') + (MOB() ? 'm|' : '') + G.map(g => g.id).join() + '|' + S.map(s => s.id + s.g + (s.parent || '')).join();
 function onFeed(d) {
   if (!d) { $('empty').textContent = '아직 세션 자료가 없습니다 — PC 에서 relay.js 를 켜 주세요'; return; }
   $('empty').style.display = 'none';
@@ -357,7 +364,7 @@ function onFeed(d) {
   if ((d.sessions || []).some(s => !s.group || !groups.some(g => g.id === s.group))) groups.push({ id: '_', name: '묶음 없음' });
   G = groups.map((g, i) => ({ ...g, c: PALETTE[i % PALETTE.length] }));
   S = (d.sessions || []).map(s => ({ ...s, g: groups.some(g => g.id === s.group) ? s.group : '_' }));
-  const sig = (MOB() ? 'm|' : '') + G.map(g => g.id).join() + '|' + S.map(s => s.id + s.g + (s.parent || '')).join();
+  const sig = layoutSigOf();
   if (sig !== layoutSig) {
     layout(); layoutSig = sig; draw();
     // 처음에는 화면에 그리기 전에 다 풀어 놓고 맞춘다 — 그 뒤 새 별이 생기면 움직이며 자리를 찾는다
@@ -385,13 +392,21 @@ const POS_KEY = 'wmw.sessions.treepos';
 let SAVED = {};
 try { SAVED = JSON.parse(localStorage.getItem(POS_KEY) || '{}') || {}; } catch (_) { SAVED = {}; }
 const savePos = () => { try { localStorage.setItem(POS_KEY, JSON.stringify(SAVED)); } catch (_) {} };
+/* 보기 — 조직도(11-15 자리) | 별자리(11-14 둥근 자리 + 힘). 고른 보기와 끌어 옮긴 자리는 보기마다 · 폰/PC 마다 따로 기억 (11-18 오너 «넣어») */
+const VIEW_KEY = 'wmw.sessions.view';
+let TREE = true;
+try { TREE = localStorage.getItem(VIEW_KEY) !== 'star'; } catch (_) {}
+const posKey = () => (TREE ? '' : 's') + (MOB() ? 'm' : 'd');
 
 /* ───────── 배치: 오너 → 묶음 → 세션 → 갈래 ─────────
  * 둥글게 놓고 시작해 힘으로 푼다(2026-11-14 오너 «옵시디언처럼 절대 겹치지 않게 유기적으로»).
  * 선은 용수철, 별끼리는 서로 밀고, 별 + 이름 상자가 겹치면 바로 떼어 놓는다. 오너 별만 가운데 고정.
  * 이미 자리 잡은 별은 자료가 새로 와도 그 자리에서 이어 움직인다 */
 let pos = {}, layoutSig = '', fitted = false, LEN = {};
+let posMode = null;   // 지금 pos 가 어느 보기로 놓였나 — 같은 별자리 보기 안에서는 살아 있는 자리를 이어 쓴다
 function layout() {
+  if (!TREE) { starLayout(); posMode = 'star'; return; }
+  posMode = 'tree';
   const m = MOB();
   LEN = { g: 0, s: 0, c: 0 };
   pos = { o: { x: 0, y: 0, fixed: true } };
@@ -432,13 +447,53 @@ function layout() {
   }
   S.forEach(s => { if (!pos[s.id]) { const hb = pos['g:' + s.g] || pos.o; pos[s.id] = { x: hb.x + 40, y: hb.y + 140 }; } });
   // 끌어 옮겨 둔 별은 그 자리로 (폰 · PC 따로 기억)
-  const mine = SAVED[m ? 'm' : 'd'] || {};
+  const mine = SAVED[posKey()] || {};
   for (const k in pos) { const sv = mine[k]; if (sv && k !== 'o') { pos[k].x = sv.x; pos[k].y = sv.y; } pos[k].vx = 0; pos[k].vy = 0; }
 }
+/** 별자리 보기 — 묶음을 오너 둘레에 둥글게, 세션은 묶음 바깥쪽 부채꼴로 놓고 힘으로 푼다(11-14 배치 그대로).
+ *  «프로젝트» 별 없이 월드도 오너에 바로 잇는다 */
+function starLayout() {
+  const old = posMode === 'star' ? pos : {}, m = MOB();
+  const R = m ? Math.max(140, 26 * G.length) : Math.max(220, 46 * G.length), RS = m ? 95 : 120, RC = m ? 70 : 90;
+  LEN = { g: R, s: RS, c: RC };
+  pos = { o: { x: 0, y: 0, fixed: true } };
+  const topsOf = g => S.filter(s => s.g === g.id && !(s.parent && S.some(p => p.id === s.parent && p.g === g.id))).sort((a, b) => a.order - b.order);
+  G.forEach((g, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / G.length; pos['g:' + g.id] = { x: R * Math.cos(a), y: R * Math.sin(a), a }; });
+  const kids = (p, a, depth) => S.filter(c => c.parent === p.id && c.g === p.g).forEach((c, k, arr) => {
+    const ca = a + (k - (arr.length - 1) / 2) * .45;
+    pos[c.id] = { x: pos[p.id].x + RC * Math.cos(ca), y: pos[p.id].y + RC * Math.sin(ca), a: ca };
+    if (depth < 3) kids(c, ca, depth + 1);
+  });
+  G.forEach(g => {
+    const hub = pos['g:' + g.id], tops = topsOf(g), n = tops.length, spread = Math.min(2.6, .5 * (n - 1));
+    tops.forEach((s, j) => {
+      const a = hub.a + (n > 1 ? -spread / 2 + spread * j / (n - 1) : 0);
+      pos[s.id] = { x: hub.x + RS * Math.cos(a), y: hub.y + RS * Math.sin(a), a };
+      kids(s, a, 1);
+    });
+  });
+  S.forEach(s => { if (!pos[s.id]) { const h = pos['g:' + s.g]; pos[s.id] = { x: h.x + 60, y: h.y + 300, a: h.a }; } });
+  const mine = SAVED[posKey()] || {};
+  for (const k in pos) {
+    const o = old[k], sv = mine[k];
+    if (k !== 'o' && o) { pos[k].x = o.x; pos[k].y = o.y; }          // 살아 있는 별은 지금 자리 그대로
+    else if (k !== 'o' && sv) { pos[k].x = sv.x; pos[k].y = sv.y; }   // 처음 놓을 때는 끌어 둔 자리로
+    pos[k].vx = 0; pos[k].vy = 0;
+  }
+}
+function setView(v) {
+  const t = v !== 'star'; if (t === TREE && posMode) { renderSeg(); return; }
+  TREE = t; try { localStorage.setItem(VIEW_KEY, t ? 'tree' : 'star'); } catch (_) {}
+  renderSeg();
+  if (!S.length && !G.length) return;
+  layout(); layoutSig = layoutSigOf(); draw(); settle(); focusGroup(null);
+}
+function renderSeg() { $('seg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.v === 'tree') === TREE))); }
+$('seg').onclick = e => { const b = e.target.closest('button[data-v]'); if (b) setView(b.dataset.v); };
+renderSeg();
 
 /* ───────── 힘 ───────── */
 let BOX = {}, NODE = {}, LINKS = [], alpha = 0, simOn = false, DRAGP = null;
-const TREE = true;   // 조직도 자리 (11-15) — false 로 두면 예전 힘 배치
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const parentKey = s => s.parent && pos[s.parent] && S.find(x => x.id === s.parent)?.g === s.g ? s.parent : 'g:' + s.g;
 function simStep() {
@@ -618,7 +673,7 @@ function endPress() {
   if (!press) return; clearTimeout(press.timer);
   if (press.mode === 'drag') {
     NODE[press.key]?.classList.remove('drag');
-    if (TREE && DRAGP) { const d = MOB() ? 'm' : 'd'; (SAVED[d] = SAVED[d] || {})[press.key] = { x: Math.round(DRAGP.x), y: Math.round(DRAGP.y) }; savePos(); }
+    if (DRAGP) { const d = posKey(); (SAVED[d] = SAVED[d] || {})[press.key] = { x: Math.round(DRAGP.x), y: Math.round(DRAGP.y) }; savePos(); }
     DRAGP = null; dragged = true; kick(.3);
   }
   press = null;
@@ -667,7 +722,7 @@ vp.addEventListener('pointerup', end); vp.addEventListener('pointercancel', end)
 $('zi').onclick = () => { world.classList.add('fly'); zoomAt(innerWidth / 2, innerHeight / 2, T.k * 1.35); };
 $('zo').onclick = () => { world.classList.add('fly'); zoomAt(innerWidth / 2, innerHeight / 2, T.k / 1.35); };
 $('zf').onclick = () => focusGroup(null);
-$('zr').onclick = () => { delete SAVED[MOB() ? 'm' : 'd']; savePos(); layout(); draw(); settle(); focusGroup(null); toast('처음 조직도 자리로 돌렸습니다'); };
+$('zr').onclick = () => { delete SAVED[posKey()]; savePos(); posMode = null; layout(); draw(); settle(); focusGroup(null); toast(TREE ? '처음 조직도 자리로 돌렸습니다' : '처음 별자리 자리로 돌렸습니다'); };
 // 별 자리에 별 + 이름 상자 크기까지 넣어 잰다 — 가장자리 별의 이름이 화면 밖으로 나가지 않게
 function boundsOf(keys, pad) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -768,7 +823,7 @@ const onBack = () => { if (Date.now() - lastRewatch < 5000) return; lastRewatch 
 /* 새 판 알아채기 — GitHub Pages 가 «10분 동안 저장해 두고 써라»(max-age=600)를 붙여, 게시해도 브라우저가 옛 판을 10분 보여 줬다
  * (11-16 확인: 게시된 고침이 오너 크롬에 안 들어감). 이 페이지를 저장 무시하고 다시 받아(cache:'reload' — 저장본도 새 판으로 바뀜)
  * 표시 PAGE_VER 가 다르면 다시 불러온다. 쓰던 글이 있으면 기다린다. 열린 카드는 다시 연다. 고칠 때마다 PAGE_VER 를 바꾼다 */
-const PAGE_VER = '2026-11-18a';
+const PAGE_VER = '2026-11-18b';
 let verChecked = 0;
 async function checkNewPage() {
   if (Date.now() - verChecked < 60 * 1000) return; verChecked = Date.now();
