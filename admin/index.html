@@ -110,8 +110,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
    * 맨 위 주소의 해시: #sc · #sessions 는 그 탭. HQ 는 자기 화면을 해시(#/home · #/projects/<id> …)로 바꾸므로
    * HQ 탭일 때는 HQ 의 해시를 그대로 맨 위에 비춘다 — 새로고침 · 즐겨찾기 · 링크가 HQ 의 그 화면으로 돌아오게 */
   var cur = null, hqHash = "";
-  function tabOf(h) { h = h.replace(/^#/, ""); return h === "sc" || h === "sessions" ? h : "hq"; }
-  function hqHashOf(h) { return /^#\//.test(h) ? h : ""; }
+  // 예전 HQ «Sessions» 메뉴 주소(#/sessions)는 세션 별자리 탭으로 — 11-18 겹쳐서 HQ 메뉴에서 뺐다
+  function tabOf(h) { h = h.replace(/^#/, ""); return h === "sc" || h === "sessions" ? h : h === "/sessions" ? "sessions" : "hq"; }
+  function hqHashOf(h) { return /^#\//.test(h) && h !== "#/sessions" ? h : ""; }
   function mirror() {
     var want = cur === "hq" ? (hqHash || "#hq") : "#" + cur;
     if (location.hash !== want) history.replaceState(null, "", "/admin/" + want);

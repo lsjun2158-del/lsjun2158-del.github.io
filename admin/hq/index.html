@@ -782,15 +782,14 @@ body.sdragging{user-select:none; -webkit-user-select:none; cursor:grabbing}
       <a href="#/decide" data-view="decide"><i>03</i>Decisions<span class="nb" id="navDecide"></span></a>
       <a href="#/launch" data-view="launch"><i>04</i>Launch</a>
       <a href="#/content" data-view="content"><i>05</i>Content</a>
-      <a href="#/sessions" data-view="sessions"><i>06</i>Sessions</a>
-      <a href="#/projects" data-view="projects"><i>07</i>Projects</a>
-      <a href="#/ai" data-view="ai"><i>08</i>AI</a>
-      <a href="#/rules" data-view="rules"><i>09</i>Rules</a>
-      <a href="#/company" data-view="company"><i>10</i>Company</a>
-      <a href="#/knowledge" data-view="knowledge"><i>11</i>Knowledge</a>
-      <a href="#/spend" data-view="spend"><i>12</i>Spending</a>
-      <a href="#/accounts" data-view="accounts"><i>13</i>Accounts</a>
-      <a href="#/settings" data-view="settings"><i>14</i>Settings</a>
+      <a href="#/projects" data-view="projects"><i>06</i>Projects</a>
+      <a href="#/ai" data-view="ai"><i>07</i>AI</a>
+      <a href="#/rules" data-view="rules"><i>08</i>Rules</a>
+      <a href="#/company" data-view="company"><i>09</i>Company</a>
+      <a href="#/knowledge" data-view="knowledge"><i>10</i>Knowledge</a>
+      <a href="#/spend" data-view="spend"><i>11</i>Spending</a>
+      <a href="#/accounts" data-view="accounts"><i>12</i>Accounts</a>
+      <a href="#/settings" data-view="settings"><i>13</i>Settings</a>
     </nav>
     <div class="rail-foot">
       <div class="conn"><span class="dot" id="connDot"></span><span id="connText">연결 확인 중</span></div>
@@ -3005,6 +3004,8 @@ body.sdragging{user-select:none; -webkit-user-select:none; cursor:grabbing}
     var raw = (location.hash || "#/home").replace(/^#\/?/, "");
     var parts = raw.split("/").filter(Boolean);
     var v = parts[0] || "home";
+    // «Sessions» 메뉴는 세션 별자리 탭과 겹쳐 뺐다 (2026-11-18 오너 «겹치는 거 없애자») — 예전 주소는 별자리로
+    if (v === "sessions") { if (window.top === window) location.replace("/admin/#sessions"); v = "home"; }
     if (!TITLES[v]) v = "home";
     return { view: v, id: parts[1] ? decodeURIComponent(parts[1]) : null };
   }
