@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>세션 별자리 · WMW HQ</title>
+<title>세션 · WMW HQ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
@@ -272,10 +272,10 @@ textarea:focus{outline:none;border-color:var(--cyan)}
 </style>
 </head>
 <body>
-<div id="gate"><div class="box"><b>WMW · 세션 별자리</b><p id="gateMsg">로그인 확인 중…</p></div></div>
+<div id="gate"><div class="box"><b>WMW · 세션</b><p id="gateMsg">로그인 확인 중…</p></div></div>
 
 <div class="top" id="top">
-  <nav class="site" aria-label="관리 화면"><a href="/admin/">HQ</a><a href="/admin/soloclimbing/">Solo Climbing</a><a href="/admin/sessions/" aria-current="page">세션 별자리</a></nav>
+  <nav class="site" aria-label="관리 화면"><a href="/admin/">HQ</a><a href="/admin/soloclimbing/">Solo Climbing</a><a href="/admin/sessions/" aria-current="page">세션</a></nav>
   <div class="stat" id="stat"></div>
   <div class="use" id="use"></div>
   <span class="relay" id="relay"><i></i><span>PC 중계 확인 중</span></span>
@@ -768,7 +768,7 @@ const onBack = () => { if (Date.now() - lastRewatch < 5000) return; lastRewatch 
 /* 새 판 알아채기 — GitHub Pages 가 «10분 동안 저장해 두고 써라»(max-age=600)를 붙여, 게시해도 브라우저가 옛 판을 10분 보여 줬다
  * (11-16 확인: 게시된 고침이 오너 크롬에 안 들어감). 이 페이지를 저장 무시하고 다시 받아(cache:'reload' — 저장본도 새 판으로 바뀜)
  * 표시 PAGE_VER 가 다르면 다시 불러온다. 쓰던 글이 있으면 기다린다. 열린 카드는 다시 연다. 고칠 때마다 PAGE_VER 를 바꾼다 */
-const PAGE_VER = '2026-11-16g';
+const PAGE_VER = '2026-11-18a';
 let verChecked = 0;
 async function checkNewPage() {
   if (Date.now() - verChecked < 60 * 1000) return; verChecked = Date.now();
@@ -1018,7 +1018,7 @@ function ctxArchive(s) {
   const go = ctxEl('button', { type: 'button', className: 'go danger', textContent: '보관하기' }); go.onclick = () => manage(s, 'archive', {});
   const no = ctxEl('button', { type: 'button', textContent: '취소' }); no.onclick = closeCtx;
   el.replaceChildren(ctxEl('div', { className: 'hd', textContent: s.title }),
-    ctxEl('p', { textContent: '이 세션을 보관합니다. 별자리와 앱 사이드바에서 빠지고, 앱의 보관함에서 언제든 되살릴 수 있습니다.' }),
+    ctxEl('p', { textContent: '이 세션을 보관합니다. 세션 화면과 앱 사이드바에서 빠지고, 앱의 보관함에서 언제든 되살릴 수 있습니다.' }),
     ctxEl('div', { className: 'row' }, [no, go]));
   ctxPlace(CTX.x, CTX.y); no.focus();
 }
@@ -1035,17 +1035,17 @@ function ctxMove(s) {
 }
 async function manage(s, op, a) {
   const pa = secretary();
-  if (!pa) { toast('PA 세션을 찾지 못했습니다 — 별자리에 «PA» 가 있어야 합니다'); return; }
+  if (!pa) { toast('PA 세션을 찾지 못했습니다 — 세션 화면에 «PA» 가 있어야 합니다'); return; }
   const who = `세션 «${s.title}» (${s.id})`;
   const what = op === 'rename' ? `${who} 의 이름을 «${a.title}» 으로 바꿔 주세요. mcp__ccd_session_mgmt__set_session_title 을 쓰세요.`
     : op === 'archive' ? `${who} 를 보관해 주세요. mcp__ccd_session_mgmt__archive_session 을 쓰세요.`
     : `${who} 를 앱 사이드바 묶음 «${a.groupName}» (묶음 id ${a.group}) 으로 옮겨 주세요. mcp__ccd_sidebar__move_sessions 를 쓰세요.`;
-  const text = `[세션 관리 — 오너가 홈페이지 별자리에서 우클릭으로 고르고 확인함]\n${what}\n`
+  const text = `[세션 관리 — 오너가 홈페이지 세션 화면에서 우클릭으로 고르고 확인함]\n${what}\n`
     + `도구가 불러져 있지 않으면 ToolSearch 로 불러 쓰세요. 다른 일은 하지 말고, 결과를 한 줄로 답해 주세요. 업무보고는 보내지 않아도 됩니다.`;
   closeCtx();
   try {
     await fs.collection('commands').add({ to: { kind: 'session', id: pa.id }, text, report: false, state: 'sent', createdAt: firebase.firestore.FieldValue.serverTimestamp(), from: 'sessions-page', manage: { op, id: s.id, ...a } });
-    toast(`PA 에게 맡겼습니다 — ${op === 'rename' ? '이름 바꾸기' : op === 'archive' ? '보관' : '묶음 옮기기'}는 PA 가 하면 별자리에 곧 반영됩니다`);
+    toast(`PA 에게 맡겼습니다 — ${op === 'rename' ? '이름 바꾸기' : op === 'archive' ? '보관' : '묶음 옮기기'}는 PA 가 하면 세션 화면에 곧 반영됩니다`);
   } catch (e) { toast('보내지 못했습니다: ' + (e.code || e.message)); }
 }
 addEventListener('pointerdown', e => { if (!$('ctx').hidden && !e.target.closest('#ctx')) closeCtx(); }, true);

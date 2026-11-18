@@ -13,7 +13,7 @@ if (window.top !== window) window.top.location.replace(location.href);
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
-/* WELMAWORLD 관리 입구 — 한 페이지에 탭 셋(HQ · Solo Climbing · 세션 별자리). 로그인은 여기서 한 번.
+/* WELMAWORLD 관리 입구 — 한 페이지에 탭 셋(HQ · Solo Climbing · 세션). 로그인은 여기서 한 번.
    탭 내용은 같은 주소 아래의 화면을 iframe 으로 띄운다. 처음 열 때 불러 두고 탭을 바꿔도 살려 둔다 */
 :root{--bg:#08080B;--surface:#131318;--line:#2A2A34;--text:#EDEDF2;--text2:#A8A8B8;--text3:#7A7A8C;--accent:#A78FFF;--warn:#F0B845;
  --font:"Pretendard",system-ui,-apple-system,"Malgun Gothic",sans-serif;color-scheme:dark}
@@ -44,7 +44,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 <nav class="bar" role="tablist" aria-label="관리 화면">
  <button type="button" role="tab" data-t="hq" aria-selected="false">HQ</button>
  <button type="button" role="tab" data-t="sc" aria-selected="false">Solo Climbing</button>
- <button type="button" role="tab" data-t="sessions" aria-selected="false">세션 별자리</button>
+ <button type="button" role="tab" data-t="sessions" aria-selected="false">세션</button>
  <button type="button" class="out" id="out" hidden>로그아웃</button>
 </nav>
 <section class="gate" id="gate">
@@ -110,7 +110,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
    * 맨 위 주소의 해시: #sc · #sessions 는 그 탭. HQ 는 자기 화면을 해시(#/home · #/projects/<id> …)로 바꾸므로
    * HQ 탭일 때는 HQ 의 해시를 그대로 맨 위에 비춘다 — 새로고침 · 즐겨찾기 · 링크가 HQ 의 그 화면으로 돌아오게 */
   var cur = null, hqHash = "";
-  // 예전 HQ «Sessions» 메뉴 주소(#/sessions)는 세션 별자리 탭으로 — 11-18 겹쳐서 HQ 메뉴에서 뺐다
+  // 예전 HQ «Sessions» 메뉴 주소(#/sessions)는 세션 탭으로 — 11-18 겹쳐서 HQ 메뉴에서 뺐다
   function tabOf(h) { h = h.replace(/^#/, ""); return h === "sc" || h === "sessions" ? h : h === "/sessions" ? "sessions" : "hq"; }
   function hqHashOf(h) { return /^#\//.test(h) && h !== "#/sessions" ? h : ""; }
   function mirror() {
@@ -125,7 +125,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     if (!f) {
       var t2 = cur;
       f = document.createElement("iframe");
-      f.dataset.t = t2; f.title = { hq: "HQ", sc: "Solo Climbing", sessions: "세션 별자리" }[t2];
+      f.dataset.t = t2; f.title = { hq: "HQ", sc: "Solo Climbing", sessions: "세션" }[t2];
       f.addEventListener("load", function () {
         try {
           var s = f.contentDocument.createElement("style"); s.textContent = HIDE_CSS; f.contentDocument.head.appendChild(s);
